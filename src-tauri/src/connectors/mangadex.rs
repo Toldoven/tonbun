@@ -242,7 +242,7 @@ impl MangaDex {
         let download_manga = MangaDex::volumes_to_chapters(&chapters_data["volumes"])?;
 
         let mut path = manga_dir();
-        path.push(&title);
+        path.push(&title.replace("/", "|"));
 
         let mut index: i32 = 2;
         while path.is_dir() {

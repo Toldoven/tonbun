@@ -21,7 +21,6 @@ const languages = [
 ]
 
 onMounted(() => {
-    console.log()
     selectedLanguage.value = prefs.value.lang
 })
 

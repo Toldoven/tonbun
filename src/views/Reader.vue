@@ -107,7 +107,6 @@ const setChapter = async () => {
 watch(chapter, () => setChapter(), { immediate: true })
 
 const handleSlideChange = async (n: number) => {
-  // await invoke("message", { message: `Change ${slide.value}` })
   slide.value = n
 }
 
@@ -137,15 +136,6 @@ function handleListClick(e: ListboxChangeEvent) {
   chapter.value = indexOf
   return indexOf
 }
-
-// watch(chapter, (value) => console.log(value))
-
-// onBeforeMount(async () => {
-
-//   if (route.query.chapter && typeof(route.query.chapter) == 'string') chapter.value = parseInt(route.query.chapter)
-//   else chapter.value = 0
-
-// })
 
 onMounted(async () => {
   getChapterList().then(() => {

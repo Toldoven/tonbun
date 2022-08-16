@@ -19,7 +19,7 @@ const handleDelete = async () => {
         await libraryCards.deleteMangaByUuid(editModal.manga.uuid)
         editModal.value = false
     } catch(e) {
-        console.log(e)
+        console.error(e)
     } finally {
         deleteLoading.value = false
     }
