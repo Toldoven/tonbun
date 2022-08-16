@@ -49,7 +49,7 @@ export const useLibraryCardsStore = defineStore('libraryCards', () => {
 
         if (outOf) downloading.value[uuid].outOf = outOf
 
-        if (downloading.value[uuid].chapter) downloading.value[uuid].chapter = chapter
+        if (downloading.value[uuid]) downloading.value[uuid].chapter = chapter
 
         if (chapter === downloading.value[uuid].outOf) delete downloading.value[uuid]
         
