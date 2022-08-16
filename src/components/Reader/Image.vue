@@ -1,0 +1,31 @@
+<script setup lang="ts">
+
+import { convertFileSrc } from '@tauri-apps/api/tauri';
+
+const props = defineProps({
+  localImage: {
+    type: String,
+    required: true
+  },
+  chapter: Number,
+})
+
+const image = convertFileSrc(props.localImage)
+
+</script>
+
+
+<template>
+
+<img v-show="image" :src="image" class="w-full h-screen"/>
+
+</template>
+
+
+<style scoped>
+
+img {
+  object-fit: contain;
+}
+
+</style>

@@ -1,0 +1,75 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "build": {
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
+    "devPath": "http://localhost:3000",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "tonbun",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": true,
+      "fs": {          
+        "scope": ["$APP/**/*", "$DOCUMENT/Mangas/**/*"]
+      },
+      "protocol" : {
+        "asset": true,
+        "assetScope": ["$APP/**/*", "$DOCUMENT/Mangas/**/*"]
+      }
+    },
+    "bundle": {
+      "active": true,
+      "category": "DeveloperTool",
+      "copyright": "",
+      "deb": {
+        "depends": []
+      },
+      "externalBin": [],
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "com.tonbun.dev",
+      "longDescription": "",
+      "macOS": {
+        "entitlements": null,
+        "exceptionDomain": "",
+        "frameworks": [],
+        "providerShortName": null,
+        "signingIdentity": null
+      },
+      "resources": [],
+      "shortDescription": "",
+      "targets": "all",
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
+      }
+    },
+    "security": {
+      "csp": "default-src 'self'; img-src * asset: https://asset.localhost; font-src *; style-src * 'unsafe-inline'; script-src 'unsafe-eval';"
+    },
+    "updater": {
+      "active": false
+    },
+    "windows": [
+      {
+        "label": "library",
+        "title": "Tonbun",
+        "width": 800,
+        "height": 600,
+        "fullscreen": false,
+        "resizable": true,
+        "visible": false
+      }
+    ]
+  }
+}
