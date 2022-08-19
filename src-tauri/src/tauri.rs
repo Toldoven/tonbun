@@ -7,6 +7,7 @@ use super::config;
 use super::manga;
 use super::connectors::mangadex::MangaDex;
 use std::env;
+use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 use uuid::{Uuid};
@@ -106,10 +107,16 @@ fn load_prefs() -> config::Prefs {
 #[tauri::command(async)]
 fn save_prefs(prefs: config::Prefs) {
   match config::Prefs::write(prefs) {
-    Ok(()) => println!("Updated manga order"),
-    Err(_) => println!("Failed to update config"),
+    Ok(()) => println!("Updated prefs"),
+    Err(_) => println!("Failed to update prefs"),
   }
 }
+
+#[tauri::command(async)]
+fn update_manga_dir(dir: PathBuf) {
+  config::update_manga_dir(dir);
+}
+
 
 pub fn run() {
   tauri::Builder::default()
@@ -127,6 +134,7 @@ pub fn run() {
       get_manga_chapter_and_slide_by_uuid,
       set_manga_chapter_and_slide_by_uuid,
       delete_manga_by_uuid,
+      update_manga_dir,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
