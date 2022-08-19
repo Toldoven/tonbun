@@ -44,7 +44,7 @@ const { t } = useI18n()
       >
       <template #item="{element}">
         <div>
-          <Card :localCover="element.cover" :title="element.title" :key="element.uuid" :uuid="element.uuid" :drag="drag"/>
+          <Card :localCover="element.cover" :title="element.title" :key="element.uuid" :chapter="element.chapter" :slide="element.slide" :uuid="element.uuid" :drag="drag"/>
         </div>
       </template>
     </Draggable>

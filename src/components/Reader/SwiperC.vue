@@ -4,49 +4,54 @@ import { ref, computed } from 'vue'
 
 import Image from './Image.vue'
 
-import { Swiper, SwiperSlide } from 'swiper/vue';
+import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Swiper as SwiperClass } from 'swiper/types'
-import ProgressSpinner from 'primevue/progressspinner';
+import { useRoute } from 'vue-router'
 
-const props = defineProps<{
-  images: Array<string>
-  path: string
-  startAtSlide: number | false
-  startFromEnd: boolean
-  lastChapter: boolean
-  firstChapter: boolean
-  visible: boolean
-}>()
+import { useReaderStore } from '../../stores/reader'
 
-const emit = defineEmits(['nextChapter', 'prevChapter', 'slideChange'])
-
+const route = useRoute()
+const reader = useReaderStore()
 const swiper = ref<SwiperClass | null>(null)
-const loading = ref(true)
 
-const setSwiper = (sw: SwiperClass) => {
-  // @ts-ignore
-  swiper.value = sw;
+const speed = ref(300)
+
+const setSwiper = (sw: SwiperClass) => swiper.value = sw
+
+const handleSlideChange = () => {
+  const activeIndex = swiper.value?.activeIndex
+  if (activeIndex !== undefined) reader.changeSlideRoute(activeIndex)
 }
 
-const handleSlideChange = () => emit("slideChange", swiper.value?.activeIndex || 0)
+const initialSlide = computed(() => {
+  const slide = parseInt(route.params.slide as string)
+  return slide >= 0 ? slide : Infinity
+})
+
+const currentSlide = (swiperIndex: number) => {
+  if (swiperIndex == Infinity) return reader.chapterData.images.length
+  return swiperIndex + 1
+}
+
+// Next / Prev 
 
 const handleNextSlide = () => {
-  if (swiper.value?.isEnd && !props.lastChapter) {
-    emit("nextChapter")
-    loading.value = true
+  if (swiper.value?.isEnd) {
+    reader.nextChapter()
     return
   }
   swiper.value?.slideNext(speed.value)
 }
 
 const handlePrevSlide = () => {
-  if (swiper.value?.isBeginning && !props.firstChapter) {
-    emit("prevChapter")
-    loading.value = true
+  if (swiper.value?.isBeginning) {
+    reader.prevChapter()
     return
   }
   swiper.value?.slidePrev(speed.value)
 }
+
+// Listeners 
 
 window.addEventListener("keyup", async function(e) {
   const keysNext = ['ArrowDown', 'ArrowRight', 'ShiftRight', 'Space', 'KeyD', 'KeyS']
@@ -66,26 +71,6 @@ window.addEventListener("wheel", async function(e) {
   else handlePrevSlide()
 })
 
-const initialLoad = ref(true)
-
-const initialSlide = computed(() => {
-  if (initialLoad.value && props.startAtSlide) return props.startAtSlide
-  return props.startFromEnd ? Infinity : 0
-})
-
-const afterInit = () => {
-  loading.value = false
-  setTimeout(() => initialLoad.value = false, 250)
-}
-
-const currentSlide = (swiperIndex: number) => {
-  if (swiperIndex == Infinity) return props.images.length
-  return swiperIndex + 1
-}
-
-const speed = ref(300)
-const touchMove = true
-
 </script>
 
 
@@ -93,7 +78,7 @@ const touchMove = true
 
 <div class="relative w-full h-full">
 
-  <div class="absolute controls w-full h-screen" v-if="!loading">
+  <div class="absolute controls w-full h-screen">
     <!-- <div @click="handlePrevSlide()" class="absolute left-0 w-6 h-screen z-2"></div>
     <div @click="handleNextSlide()" class="absolute right-0 w-6 h-screen z-2"></div> -->
     <div 
@@ -109,33 +94,27 @@ const touchMove = true
   </div>
 
   <p class="opacity-50 p-card p-component p-2 absolute bottom-0 right-0 m-3 z-3">
-    {{`${currentSlide(swiper?.activeIndex || 0)} / ${props.images.length}`}}
+    {{`${currentSlide(swiper?.activeIndex || 0)} / ${reader.chapterData.images.length}`}}
   </p>
 
-  <div v-show="!loading">
+  <div>
     <Swiper
       @swiper="setSwiper"
       @active-index-change="handleSlideChange"
-      @after-init="afterInit"
-      :key="props.path"
+      :key="reader.chapterData.path"
       :initialSlide="initialSlide"
       :slides-per-view="1"
       :space-between="12"
-      :allow-touch-move="touchMove"
+      :allow-touch-move="false"
       direction="vertical"
       :observer="true"
-      :speed="speed"
+      :speed="300"
     >
-      <SwiperSlide v-for="image in props.images" :key="`${props.path}/${image}`">
-        <Image :key="`${props.path}/${image}`" :localImage="`${path}/${image}`">
+      <SwiperSlide v-for="image in reader.chapterData.images" :key="`${reader.chapterData.path}/${image}`">
+        <Image :key="`${reader.chapterData.path}/${image}`" :localImage="`${reader.chapterData.path}/${image}`">
       </Image></SwiperSlide>
     </Swiper>
   </div>
-
-  <div class="absolute top-0 w-full h-screen flex align-items-center justify-content-center">
-    <ProgressSpinner strokeWidth="4"/>
-  </div>
-
 </div>
 
 </template>

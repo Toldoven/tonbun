@@ -19,19 +19,19 @@ pub struct MangaCard {
     title: String,
     cover: String,
     order: i32,
-    chapter: i32,
+    chapter: String,
     slide: i32,
 }
 
 impl MangaCard {
-    fn new(uuid: Uuid, title: &str, connector: &str, cover: &str, order: i32, chapter: i32, slide: i32) -> MangaCard {
+    fn new(uuid: Uuid, title: &str, connector: &str, cover: &str, order: i32, chapter: &str, slide: i32) -> MangaCard {
         MangaCard {
             uuid,
             title: title.to_string(),
             connector: connector.to_string(),
             cover: cover.to_string(),
             order,
-            chapter,
+            chapter: chapter.to_string(),
             slide,
         }
     }
@@ -80,18 +80,18 @@ pub struct MangaMeta {
     uuid: Uuid,
     connector: String,
     order: i32,
-    chapter: i32,
+    chapter: String,
     slide: i32,
     finished_chapters: Vec<i32>,
 }
 
 impl MangaMeta {
-    pub fn new(uuid: Uuid, connector: &str, order: i32, chapter: i32, slide: i32, finished_chapters: Vec<i32>) -> MangaMeta {
+    pub fn new(uuid: Uuid, connector: &str, order: i32, chapter: &str, slide: i32, finished_chapters: Vec<i32>) -> MangaMeta {
         MangaMeta {
             uuid,
             connector: connector.to_string(),
             order,
-            chapter,
+            chapter: chapter.to_string(),
             slide, 
             finished_chapters,
         }
@@ -102,7 +102,7 @@ impl MangaMeta {
             Uuid::new_v4(),
             "Local",
             -1,
-            0,
+            "0",
             0,
             vec![],
         )
@@ -111,6 +111,7 @@ impl MangaMeta {
 
 
 pub fn get_chapter_images(path: &PathBuf) -> Vec<String> {
+
     let mut images: Vec<String> = read_dir(path)
         .unwrap()
         .map(|image| image.unwrap().path())
@@ -245,7 +246,7 @@ pub fn get_manga_cards() -> Vec<MangaCard> {
             meta.connector.as_str(),
             cover.to_str().unwrap(),
             meta.order,
-            meta.chapter,
+            meta.chapter.as_str(),
             meta.slide,
         ));
     }
@@ -253,12 +254,23 @@ pub fn get_manga_cards() -> Vec<MangaCard> {
     manga_cards
 }
 
-pub fn get_chapter_by_uuid(uuid: Uuid, index: usize) -> Chapter {
+// pub fn get_chapter_by_uuid(uuid: Uuid, index: usize) -> Chapter {
 
-    let path = get_manga_path_and_meta_by_uuid(uuid).path;
-    let chapters = get_manga_chapters(&path);
+//     let path = get_manga_path_and_meta_by_uuid(uuid).path;
+//     let chapters = get_manga_chapters(&path);
 
-    chapters.get(index).unwrap().clone()
+//     chapters.get(index).unwrap().clone()
+// }
+
+pub fn get_chapter_by_title(title: &str, chapter: &str) -> Chapter {
+
+    let mut path = manga_dir_title(title);
+    path.push(chapter);
+
+    Chapter::new(
+        PathBuf::from(&path),
+        get_chapter_images(&path)
+    )
 }
 
 struct PathAndMeta {
@@ -288,9 +300,25 @@ fn get_manga_by_uuid(uuid: Uuid) -> Manga {
     get_manga_by_path(&path)
 }
 
-pub fn get_chapter_list_by_uuid(uuid: Uuid) -> Vec<String> {
+// pub fn get_chapter_list_by_uuid(uuid: Uuid) -> Vec<String> {
 
-    let path = get_manga_path_and_meta_by_uuid(uuid).path;
+//     let path = get_manga_path_and_meta_by_uuid(uuid).path;
+//     let chapters = get_manga_chapters(&path);
+
+//     chapters.iter().map(|chapter|{
+//         chapter.path
+//             .file_name()
+//             .unwrap()
+//             .to_str()
+//             .unwrap()
+//             .to_string()
+//     }).collect()
+
+// }
+
+pub fn get_chapter_list_by_title(title: String) -> Vec<String> {
+
+    let path = manga_dir_title(title.as_str());
     let chapters = get_manga_chapters(&path);
 
     chapters.iter().map(|chapter|{
@@ -309,18 +337,32 @@ pub fn get_manga_title_by_uuid(uuid: Uuid) -> String {
     return path.file_name().unwrap().to_str().unwrap().to_string();
 }
 
-pub fn get_manga_chapter_and_slide_by_uuid(uuid: Uuid) -> [i32; 2] {
-    let meta = get_manga_path_and_meta_by_uuid(uuid).meta;
-    return [meta.chapter, meta.slide]
-}
+// pub fn get_manga_chapter_and_slide_by_uuid(uuid: Uuid) -> [String; 2] {
+//     let meta = get_manga_path_and_meta_by_uuid(uuid).meta;
+//     return [meta.chapter, meta.slide]
+// }
 
-pub fn set_manga_chapter_and_slide_by_uuid(uuid: Uuid, chapter: i32, slide: i32) -> Result<(), Box<dyn Error>> {
-    let mut manga = get_manga_by_uuid(uuid);
-    manga.meta.chapter = chapter;
+// pub fn set_manga_chapter_and_slide_by_uuid(uuid: Uuid, chapter: i32, slide: i32) -> Result<(), Box<dyn Error>> {
+//     let mut manga = get_manga_by_uuid(uuid);
+//     manga.meta.chapter = chapter;
+//     manga.meta.slide = slide;
+//     manga.update_meta()?;
+
+//     Ok(())
+// }
+
+pub fn set_manga_chapter_and_slide_by_title(title: &str, chapter: &str, slide: i32) -> Result<(), Box<dyn Error>> {
+    let mut manga = get_manga_by_path(&manga_dir_title(title));
+    manga.meta.chapter = chapter.to_string();
     manga.meta.slide = slide;
     manga.update_meta()?;
 
     Ok(())
+}
+
+pub fn get_manga_meta_by_title(title: &str) -> MangaMeta {
+    let path = manga_dir_title(title);
+    get_meta(&path)
 }
 
 pub fn update_manga_order(order_list: Vec<UuidOrderIndex>) -> Result<(), Box<dyn Error>> {

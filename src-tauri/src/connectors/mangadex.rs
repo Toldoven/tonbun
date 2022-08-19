@@ -190,7 +190,7 @@ impl MangaDex {
     fn create_meta(manga_uuid: &str, manga_path: &PathBuf) -> Result<(), Box<dyn Error>> {
         let uuid = Uuid::parse_str(manga_uuid)?;
         create_custom_meta(&manga_path, MangaMeta::new(
-            uuid, "MangaDex", -1, 0, 0, vec![]))?;
+            uuid, "MangaDex", -1, "0", 0, vec![]))?;
 
         Ok(())
     }

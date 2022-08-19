@@ -20,7 +20,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  title: String,
+  title: {
+    type: String,
+    required: true,
+  },
   localCover: {
     type: String,
     required: true,
@@ -39,15 +42,13 @@ async function handleRead() {
 
     await WebviewWindow.getByLabel('reader')?.close()
 
-    const chapter_and_slide: Array<number> = await invoke('get_manga_chapter_and_slide_by_uuid', { uuid: props.uuid })
-
-    const webview = new WebviewWindow('reader', {
-      url: `read/${props.uuid}?title=${props.title}&chapter=${chapter_and_slide[0]}&slide=${chapter_and_slide[1]}`,
-    })
+    const meta: any = await invoke('get_manga_meta_by_title', { title: props.title })
+    const url = `read/${props.title}/${meta.chapter}/${meta.slide}`
+    const webview = new WebviewWindow('reader', { url } )
   
     webview.once('tauri://created', async () => {
       webview.hide()
-      props.title && webview.setTitle(props.title)
+      webview.setTitle(props.title)
       loadWindowPrefs(webview)
     })
 

@@ -2,14 +2,13 @@
 
 import Library from '../components/Library/Library.vue'
 
-import { onMounted, onBeforeMount, ref, onUnmounted } from 'vue';
-import { addFullscreenEventListener, loadWindowPrefs, saveWindowPrefs } from '../lib/window';
-import { WindowManager, appWindow } from '@tauri-apps/api/window';
-import Language from '../components/Language.vue';
-import { invoke } from '@tauri-apps/api/tauri';
+import { onMounted } from 'vue'
+import { addFullscreenEventListener, loadWindowPrefs, saveWindowPrefs } from '../lib/window'
+import { WindowManager, appWindow } from '@tauri-apps/api/window'
+import Language from '../components/Language.vue'
 
-import { useLibraryCardsStore } from '../stores/libraryCards';
-import { usePrefsStore } from '../stores/prefs';
+import { useLibraryCardsStore } from '../stores/libraryCards'
+import { usePrefsStore } from '../stores/prefs'
 
 const webview: WindowManager = appWindow
 const libraryCards = useLibraryCardsStore()

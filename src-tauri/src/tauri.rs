@@ -32,14 +32,24 @@ fn get_manga_cards() -> Vec<manga::MangaCard> {
   manga::get_manga_cards()
 }
 
-#[tauri::command(async)]
-fn get_chapter_by_uuid(uuid: &str, index: usize) -> manga::Chapter {
-  manga::get_chapter_by_uuid(Uuid::parse_str(uuid).unwrap(), index)
-}
+// #[tauri::command(async)]
+// fn get_chapter_by_uuid(uuid: &str, index: usize) -> manga::Chapter {
+//   manga::get_chapter_by_uuid(Uuid::parse_str(uuid).unwrap(), index)
+// }
 
 #[tauri::command(async)]
-fn get_chapter_list_by_uuid(uuid: &str) -> Vec<String> {
-  manga::get_chapter_list_by_uuid(Uuid::parse_str(uuid).unwrap())
+fn get_chapter_by_title(title: &str, chapter: &str) -> manga::Chapter {
+  manga::get_chapter_by_title(title, chapter)
+}
+
+// #[tauri::command(async)]
+// fn get_chapter_list_by_uuid(uuid: &str) -> Vec<String> {
+//   manga::get_chapter_list_by_uuid(Uuid::parse_str(uuid).unwrap())
+// }
+
+#[tauri::command(async)]
+fn get_chapter_list_by_title(title: String) -> Vec<String> {
+  manga::get_chapter_list_by_title(title)
 }
 
 #[tauri::command(async)]
@@ -47,9 +57,14 @@ fn get_manga_title_by_uuid(uuid: &str) -> String {
   manga::get_manga_title_by_uuid(Uuid::parse_str(uuid).unwrap())
 }
 
+// #[tauri::command(async)]
+// fn get_manga_chapter_and_slide_by_uuid(uuid: &str) -> [i32; 2] {
+//   manga::get_manga_chapter_and_slide_by_uuid(Uuid::parse_str(uuid).unwrap())
+// }
+
 #[tauri::command(async)]
-fn get_manga_chapter_and_slide_by_uuid(uuid: &str) -> [i32; 2] {
-  manga::get_manga_chapter_and_slide_by_uuid(Uuid::parse_str(uuid).unwrap())
+fn get_manga_meta_by_title(title: &str) -> manga::MangaMeta {
+  manga::get_manga_meta_by_title(title)
 }
 
 #[tauri::command(async)]
@@ -57,11 +72,19 @@ fn delete_manga_by_uuid(uuid: &str) {
   manga::delete_manga_by_uuid(Uuid::parse_str(uuid).unwrap())
 }
 
+// #[tauri::command(async)]
+// fn set_manga_chapter_and_slide_by_uuid(uuid: &str, chapter: i32, slide: i32) {
+//   match manga::set_manga_chapter_and_slide_by_uuid(Uuid::parse_str(uuid).unwrap(), chapter, slide) {
+//     Ok(()) => println!("Updated chapter ({}) and slide ({}) of {}", chapter, slide, uuid),
+//     Err(_) => println!("Failed to update chapter and slide of {}", uuid),
+//   }
+// }
+
 #[tauri::command(async)]
-fn set_manga_chapter_and_slide_by_uuid(uuid: &str, chapter: i32, slide: i32) {
-  match manga::set_manga_chapter_and_slide_by_uuid(Uuid::parse_str(uuid).unwrap(), chapter, slide) {
-    Ok(()) => println!("Updated chapter ({}) and slide ({}) of {}", chapter, slide, uuid),
-    Err(_) => println!("Failed to update chapter and slide of {}", uuid),
+fn set_manga_chapter_and_slide_by_title(title: &str, chapter: &str, slide: i32) {
+  match manga::set_manga_chapter_and_slide_by_title(title, chapter, slide) {
+    Ok(()) => println!("Updated chapter ({}) and slide ({}) of {}", chapter, slide, title),
+    Err(_) => println!("Failed to update chapter and slide of {}", title),
   }
 }
 
@@ -129,10 +152,10 @@ pub fn run() {
       get_manga_cards,
       update_manga_order,
       get_manga_title_by_uuid,
-      get_chapter_list_by_uuid,
-      get_chapter_by_uuid,
-      get_manga_chapter_and_slide_by_uuid,
-      set_manga_chapter_and_slide_by_uuid,
+      get_chapter_list_by_title,
+      get_chapter_by_title,
+      set_manga_chapter_and_slide_by_title,
+      get_manga_meta_by_title,
       delete_manga_by_uuid,
       update_manga_dir,
     ])
