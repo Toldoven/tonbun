@@ -1,15 +1,15 @@
 import { invoke } from "@tauri-apps/api"
-import { appWindow } from "@tauri-apps/api/window"
+import { appWindow, WindowManager } from "@tauri-apps/api/window"
 import { defineStore } from "pinia"
 import { ref, watch } from "vue"
 import { useRoute } from "vue-router"
 import router from "../router"
 
+const webview: WindowManager = appWindow
+
 export const useReaderStore = defineStore('reader', () => {
 
     const route = useRoute()
-
-    const webview = appWindow
 
     // Chapter List
 
@@ -23,7 +23,7 @@ export const useReaderStore = defineStore('reader', () => {
         })
     }
     
-    getChapterList()
+    // getChapterList()
 
     // Change chapters
 
@@ -55,17 +55,18 @@ export const useReaderStore = defineStore('reader', () => {
         path: '',
         images: [],
     })
-    
-    watch(route, async () => {
 
-        updateTitle()
-    
+    const updateChapterData = async () => {
         chapterData.value = await invoke('get_chapter_by_title', {
             title: route.params.title,
             chapter: route.params.chapter
         })
+    }
     
-    }, { immediate: true } )
+    watch(route, async () => {
+        updateTitle()
+        updateChapterData()
+    }, { immediate: true })
 
     // Slider 
 
@@ -79,5 +80,5 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Return
 
-    return { chapterList, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter }
+    return { chapterList, getChapterList, updateChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter }
 })

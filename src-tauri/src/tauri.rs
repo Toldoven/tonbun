@@ -10,6 +10,7 @@ use std::env;
 use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
+use tauri::Manager;
 use uuid::{Uuid};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -140,9 +141,17 @@ fn update_manga_dir(dir: PathBuf) {
   config::update_manga_dir(dir);
 }
 
+#[tauri::command]
+fn change_reader_url(url: String, app_handle: tauri::AppHandle) {
+  let window = app_handle.get_window("reader").unwrap();
+  let js = format!("window.location.replace('{}')", url);
+  let _ = window.eval(js.as_str());
+}
+
 
 pub fn run() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_persisted_scope::init())
     .invoke_handler(tauri::generate_handler![
       message,
       search_title,
@@ -158,6 +167,7 @@ pub fn run() {
       get_manga_meta_by_title,
       delete_manga_by_uuid,
       update_manga_dir,
+      change_reader_url,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

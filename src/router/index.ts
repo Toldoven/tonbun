@@ -6,11 +6,11 @@ const routes = [
     name: 'Library',
     component: Library
   },
-  // {
-  //   path: '/read/:uuid',
-  //   name: 'Reader',
-  //   component: () => import('../views/Reader.vue'),
-  // }
+  {
+    path: '/read',
+    name: 'Reader',
+    component: () => import('../views/Reader.vue'),
+  },
   {
     path: '/read/:title',
     redirect: to => ({ path: `/read/${to.params.title}/0/0` }),

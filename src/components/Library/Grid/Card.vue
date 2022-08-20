@@ -2,9 +2,9 @@
 
 import Skeleton from 'primevue/skeleton'
 import Button from 'primevue/button'
-import { WebviewWindow } from '@tauri-apps/api/window'
+import { WebviewWindow, appWindow } from '@tauri-apps/api/window'
 
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import { invoke, convertFileSrc } from '@tauri-apps/api/tauri'
 import { loadWindowPrefs } from '../../../lib/window'
@@ -35,22 +35,39 @@ const cover = convertFileSrc(props.localCover)
 
 const loading = ref(false)
 
-async function handleRead() {
+const cWebview = appWindow
+
+onMounted(() => {
+  cWebview.listen('change_url', (event: any) => console.log(event.payload))
+})
+
+const handleRead = async () => {
   try {
 
     loading.value = true;
 
-    await WebviewWindow.getByLabel('reader')?.close()
-
     const meta: any = await invoke('get_manga_meta_by_title', { title: props.title })
-    const url = `read/${props.title}/${meta.chapter}/${meta.slide}`
-    const webview = new WebviewWindow('reader', { url } )
+    const url = `/read/${props.title}/${meta.chapter}/${meta.slide}`
+
+    let webview = WebviewWindow.getByLabel('reader')
+
+    if (!webview) { 
+      webview = new WebviewWindow('reader', { url } )
+    } else {
+      invoke('change_reader_url', { url: url })
+    }
+
+    // webview.hide()
+
+    // const meta: any = await invoke('get_manga_meta_by_title', { title: props.title })
+    // const url = `read/${props.title}/${meta.chapter}/${meta.slide}`
+    // const webview = new WebviewWindow('reader', { url } )
   
-    webview.once('tauri://created', async () => {
-      webview.hide()
-      webview.setTitle(props.title)
-      loadWindowPrefs(webview)
-    })
+    // webview.once('tauri://created', async () => {
+    //   // webview.hide()
+    //   // webview.setTitle(props.title)
+    //   loadWindowPrefs(webview)
+    // })
 
     setTimeout(() => loading.value = false, 500)
 

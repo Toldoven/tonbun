@@ -111,8 +111,8 @@ window.addEventListener("wheel", async function(e) {
       :speed="300"
     >
       <SwiperSlide v-for="image in reader.chapterData.images" :key="`${reader.chapterData.path}/${image}`">
-        <Image :key="`${reader.chapterData.path}/${image}`" :localImage="`${reader.chapterData.path}/${image}`">
-      </Image></SwiperSlide>
+        <Image class="w-full h-screen" :key="`${reader.chapterData.path}/${image}`" :localImage="`${reader.chapterData.path}/${image}`"/>
+      </SwiperSlide>
     </Swiper>
   </div>
 </div>

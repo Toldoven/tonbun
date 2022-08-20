@@ -6,7 +6,7 @@ import { useReaderStore } from '../../stores/reader'
 import Chapter from './Chapter.vue'
 
 import Button from 'primevue/button'
-import Listbox, { ListboxChangeEvent } from 'primevue/listbox'
+import Dropdown from 'primevue/dropdown'
 
 const reader = useReaderStore()
 
@@ -15,13 +15,7 @@ const visible = ref(false)
 
 const webview = appWindow
 
-function handleListClick(e: ListboxChangeEvent) {
-    reader.setChapter(e.toString())
-//   const indexOf = reader.chapterList.indexOf(e.toString())
-//   if (indexOf < 0) return
-//   chapter.value = indexOf
-//   return indexOf
-}
+const handleListClick = (e) => reader.setChapter(e.value)
 
 onMounted(async () => {
 
@@ -52,20 +46,28 @@ const toggleFullscreen = () => {
 
 <template>
 
-<div :class="`mouse-move absolute flex gap-2 flex-row-reverse z-3 right-0 m-3 ${!visible ? `hidden` : ''}`">
+<div :class="`mouse-move fixed flex gap-2 flex-row-reverse z-3 right-0 m-3 ${!visible ? `hidden` : ''}`">
   <Button @click="webview.emit('tauri://close-requested')" v-if="fullscreen" icon="pi pi-times" class="p-button-plain p-button-rounded p-button-text"></Button>
   <Button @click="toggleFullscreen" :icon="`pi ${!fullscreen ? `pi-window-maximize` : `pi-window-minimize`}`" class="p-button-plain p-button-rounded p-button-text"></Button>
+  <!-- <Button @click="" icon="pi pi-cog" class="p-button-plain p-button-rounded p-button-text"></Button> -->
 </div>
 
-<div class="chapter-info w-10rem absolute z-3 m-3">
-<p :class="`mouse-move p-card p-component p-3 mb-2 ${!visible ? `hidden` : ''}`">{{ $route.params.chapter }}</p>
+<div :class="`mouse-move w-12rem fixed z-3 m-3 ${!visible ? `hidden` : ''}`">
+  <Dropdown
+    :modelValue="$route.params.chapter"
+    @change="handleListClick"
+    :options="reader.chapterList"
+    class="z-4 w-full "
+  ></Dropdown>
+
+<!-- <p :class="`mouse-move p-card p-component p-3 mb-2 ${!visible ? `hidden` : ''}`">{{ $route.params.chapter }}</p>
 <Listbox
     :modelValue="$route.params.chapter"
     @update:modelValue="handleListClick"
     :options="reader.chapterList"
     class="z-4" style="width:15rem"
     listStyle="height:250px">
-</Listbox>
+</Listbox> -->
 </div>
 
 <Chapter/>
@@ -75,34 +77,33 @@ const toggleFullscreen = () => {
 
 <style lang="scss">
 
-.chapter-info {
-  p {
-    width: fit-content;
-    opacity: 0.8;
-    // &.hidden {
-    //   ba
-    //   opacity: 1 !important;
-    // }
-  }
-  .p-listbox {
-    opacity: 0;
-    transition: opacity 500ms !important;
-  }
-  &:hover {
-    p {
-      opacity: 0.8 !important;
-    }
-    .p-listbox {
-      opacity: 0.9;
-      // transition: opacity 1000ms;
-      display: block;
-    }
-  }
+.pi-cog {
+  font-size: 1.5rem !important;
 }
 
+// .chapter-info {
+//   p {
+//     width: fit-content;
+//     opacity: 0.8;
+//   }
+//   .p-listbox {
+//     opacity: 0;
+//     transition: opacity 500ms !important;
+//   }
+//   &:hover {
+//     p {
+//       opacity: 0.8 !important;
+//     }
+//     .p-listbox {
+//       opacity: 0.9;
+//       display: block;
+//     }
+//   }
+// }
+
 .mouse-move {
-  opacity: 1;
-  // transition: opacity 300ms !important;
+  opacity: 0.9;
+  transition: opacity 300ms;
   &.hidden {
     opacity: 0;
   }

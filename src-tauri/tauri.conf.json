@@ -69,6 +69,16 @@
         "fullscreen": false,
         "resizable": true,
         "visible": false
+      },
+      {
+        "label": "reader",
+        "title": "Tonbun Reader",
+        "url": "/read",
+        "width": 600,
+        "height": 900,
+        "fullscreen": false,
+        "resizable": true,
+        "visible": false
       }
     ]
   }

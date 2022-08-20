@@ -1,20 +1,20 @@
 <script setup lang="ts">
 
-import { invoke } from '@tauri-apps/api';
-import { appWindow } from '@tauri-apps/api/window';
-import { onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { invoke } from '@tauri-apps/api'
+import { appWindow, getCurrent } from '@tauri-apps/api/window'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import Reader from '../components/Reader/Reader.vue'
-import { addFullscreenEventListener, saveWindowPrefs } from '../lib/window';
-import { useReaderStore } from '../stores/reader';
+import { addFullscreenEventListener, saveWindowPrefs } from '../lib/window'
+import { useReaderStore } from '../stores/reader'
 
 const route = useRoute()
+const reader = useReaderStore()
 
 const webview = appWindow
 
 onMounted(async () => {
     try {
-        webview.show()
 
         addFullscreenEventListener(window, webview)
 
@@ -27,8 +27,15 @@ onMounted(async () => {
                 }),
                 saveWindowPrefs(webview)
             ])
-            webview.close()
+            webview.hide()
         })
+
+        await reader.getChapterList()
+        await reader.updateChapterData()
+
+        webview.show()
+        webview.setFocus()
+
     } catch (e) {
         invoke('message', { message: e })
     }
@@ -40,6 +47,6 @@ const fullscreen = ref(false)
 
 <template>
 
-<Reader/>
+<Reader :key="route.params.title as string"/>
 
 </template>
