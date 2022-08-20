@@ -129,6 +129,7 @@ pub fn get_manga_chapters(path: &PathBuf) -> Vec<Chapter> {
     let mut chapters: Vec<PathBuf> = read_dir(&path)
         .unwrap()
         .map(|chapter| chapter.unwrap().path())
+        .filter(|chapter| chapter.is_dir())
         .collect();
 
     sort_path_slice(&mut chapters);
@@ -160,6 +161,7 @@ pub fn create_custom_meta(manga_path: &PathBuf, meta: MangaMeta) -> Result<Manga
 }
 
 fn get_meta(manga_path: &PathBuf) -> MangaMeta {
+
     let meta_path = manga_path_to_meta_path(manga_path);
 
     if !meta_path.is_file() {
@@ -171,7 +173,7 @@ fn get_meta(manga_path: &PathBuf) -> MangaMeta {
 
     match meta {
         Ok(result) => return result,
-        Err(_) => return create_default_meta(&meta_path),
+        Err(_) => return create_default_meta(manga_path),
     }
 }
 

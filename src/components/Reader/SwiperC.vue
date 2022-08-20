@@ -2,6 +2,8 @@
 
 import { ref, computed } from 'vue'
 
+import ProgressSpinner from 'primevue/progressspinner';
+
 import Image from './Image.vue'
 
 import { Swiper, SwiperSlide } from 'swiper/vue'
@@ -36,6 +38,7 @@ const currentSlide = (swiperIndex: number) => {
 // Next / Prev 
 
 const handleNextSlide = () => {
+  if (reader.loadingChapter) return
   if (swiper.value?.isEnd) {
     reader.nextChapter()
     return
@@ -44,6 +47,7 @@ const handleNextSlide = () => {
 }
 
 const handlePrevSlide = () => {
+  if (reader.loadingChapter) return
   if (swiper.value?.isBeginning) {
     reader.prevChapter()
     return
@@ -93,11 +97,12 @@ window.addEventListener("wheel", async function(e) {
       style="height: 50%"/>
   </div>
 
-  <p class="opacity-50 p-card p-component p-2 absolute bottom-0 right-0 m-3 z-3">
+  <p class="opacity-50 p-card p-component p-2 absolute bottom-0 right-0 m-3 z-3" v-if="reader.chapterData.images.length > 0">
     {{`${currentSlide(swiper?.activeIndex || 0)} / ${reader.chapterData.images.length}`}}
   </p>
 
   <div>
+    
     <Swiper
       @swiper="setSwiper"
       @active-index-change="handleSlideChange"
@@ -109,11 +114,17 @@ window.addEventListener("wheel", async function(e) {
       direction="vertical"
       :observer="true"
       :speed="300"
+      v-show="!reader.loadingChapter"
     >
       <SwiperSlide v-for="image in reader.chapterData.images" :key="`${reader.chapterData.path}/${image}`">
         <Image class="w-full h-screen" :key="`${reader.chapterData.path}/${image}`" :localImage="`${reader.chapterData.path}/${image}`"/>
       </SwiperSlide>
     </Swiper>
+
+    <div class="absolute top-0 w-full h-screen flex align-items-center justify-content-center" v-if="reader.loadingChapter">
+      <ProgressSpinner strokeWidth="4"/>
+    </div>
+
   </div>
 </div>
 

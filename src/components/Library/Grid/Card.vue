@@ -44,32 +44,26 @@ onMounted(() => {
 const handleRead = async () => {
   try {
 
-    loading.value = true;
+    loading.value = true
+    setTimeout(() => loading.value = false, 500)
 
     const meta: any = await invoke('get_manga_meta_by_title', { title: props.title })
     const url = `/read/${props.title}/${meta.chapter}/${meta.slide}`
 
     let webview = WebviewWindow.getByLabel('reader')
 
-    if (!webview) { 
-      webview = new WebviewWindow('reader', { url } )
-    } else {
+    if (webview) {
       invoke('change_reader_url', { url: url })
+      webview.hide()
+    } else {
+      webview = new WebviewWindow('reader', { url } )
+      webview.once('tauri://created', async () => {
+        webview.hide()
+        webview.setTitle(props.title)
+      })
     }
 
-    // webview.hide()
-
-    // const meta: any = await invoke('get_manga_meta_by_title', { title: props.title })
-    // const url = `read/${props.title}/${meta.chapter}/${meta.slide}`
-    // const webview = new WebviewWindow('reader', { url } )
-  
-    // webview.once('tauri://created', async () => {
-    //   // webview.hide()
-    //   // webview.setTitle(props.title)
-    //   loadWindowPrefs(webview)
-    // })
-
-    setTimeout(() => loading.value = false, 500)
+    loadWindowPrefs(webview)
 
   } catch (e) {
     invoke('message', { message: e })

@@ -15,6 +15,10 @@ const visible = ref(false)
 
 const webview = appWindow
 
+const dropdown = ref(null)
+
+const isDropdownShown = ref(false)
+
 const handleListClick = (e) => reader.setChapter(e.value)
 
 onMounted(async () => {
@@ -25,10 +29,13 @@ onMounted(async () => {
         const whenRun = Date.now()
         lastMove.value = whenRun
 
+
         setTimeout(async () => {
             if (lastMove.value != whenRun) return
+            if (isDropdownShown.value) return
             visible.value = false
-        }, 1000)
+            dropdown.value.hide()
+        }, 1500)
     })
 
     fullscreen.value = await webview.isFullscreen()
@@ -56,8 +63,11 @@ const toggleFullscreen = () => {
   <Dropdown
     :modelValue="$route.params.chapter"
     @change="handleListClick"
+    @show="isDropdownShown = true"
+    @hide="isDropdownShown = false"
     :options="reader.chapterList"
     class="z-4 w-full "
+    ref="dropdown"
   ></Dropdown>
 
 <!-- <p :class="`mouse-move p-card p-component p-3 mb-2 ${!visible ? `hidden` : ''}`">{{ $route.params.chapter }}</p>
