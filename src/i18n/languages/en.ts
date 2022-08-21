@@ -7,6 +7,18 @@ const en = {
     read: "Read", 
     delete: "Delete",
     download: "Download",
+    reader: {
+        direction: "Scroll Direction",
+        directions: {
+            horizontal: "Horizontal",
+            vertical: "Vertical",
+        },
+        invertDirection: "Scroll Direction",
+        invertDirections: {
+            false: "Left To Right",
+            true: "Right To Left",
+        }
+    },
     error: {
         notFound: "Nothing found",
         cantConnect: "Can't connect to MangaDex"

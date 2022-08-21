@@ -1,8 +1,8 @@
 <script setup lang="ts">
 
 import { invoke } from '@tauri-apps/api'
-import { appWindow, getCurrent } from '@tauri-apps/api/window'
-import { onMounted, ref } from 'vue'
+import { appWindow } from '@tauri-apps/api/window'
+import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Reader from '../components/Reader/Reader.vue'
 import { addFullscreenEventListener, saveWindowPrefs } from '../lib/window'
@@ -40,8 +40,6 @@ onMounted(async () => {
         invoke('message', { message: e })
     }
 })
-
-const fullscreen = ref(false)
 
 </script>
 

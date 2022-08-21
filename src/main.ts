@@ -5,6 +5,7 @@ import PrimeVue from 'primevue/config'
 import router from './router'
 import { createPinia } from 'pinia'
 import ToastService from 'primevue/toastservice';
+import VueZoomer from 'vue-zoomer'
 
 import i18n from "./i18n/index";
 
@@ -17,6 +18,7 @@ Vue.use(PrimeVue)
 Vue.use(pinia)
 Vue.use(ToastService)
 Vue.use(i18n)
+Vue.use(VueZoomer)
 
 Vue.mount('#app')
 

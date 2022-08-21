@@ -7,6 +7,8 @@ import Chapter from './Chapter.vue'
 
 import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
+import OverlayPanel from 'primevue/overlaypanel'
+import Menu from './Menu.vue';
 
 const reader = useReaderStore()
 
@@ -14,10 +16,12 @@ const lastMove = ref(Date.now())
 const visible = ref(false)
 
 const webview = appWindow
+const menu = ref(null)
 
 const dropdown = ref(null)
 
 const isDropdownShown = ref(false)
+const isMenuShown = ref(false)
 
 const handleListClick = (e) => reader.setChapter(e.value)
 
@@ -29,10 +33,9 @@ onMounted(async () => {
         const whenRun = Date.now()
         lastMove.value = whenRun
 
-
         setTimeout(async () => {
             if (lastMove.value != whenRun) return
-            if (isDropdownShown.value) return
+            if (isDropdownShown.value || isMenuShown.value) return
             visible.value = false
             dropdown.value.hide()
         }, 1500)
@@ -48,6 +51,10 @@ const toggleFullscreen = () => {
   webview.setFullscreen(fullscreen.value)
 }
 
+// const toggleMenu = (event) => {
+//   menu.value.toggle(event)
+// }
+
 </script>
 
 
@@ -56,8 +63,12 @@ const toggleFullscreen = () => {
 <div :class="`mouse-move fixed flex gap-2 flex-row-reverse z-3 right-0 m-3 ${!visible ? `hidden` : ''}`">
   <Button @click="webview.emit('tauri://close-requested')" v-if="fullscreen" icon="pi pi-times" class="p-button-plain p-button-rounded p-button-text"></Button>
   <Button @click="toggleFullscreen" :icon="`pi ${!fullscreen ? `pi-window-maximize` : `pi-window-minimize`}`" class="p-button-plain p-button-rounded p-button-text"></Button>
-  <!-- <Button @click="" icon="pi pi-cog" class="p-button-plain p-button-rounded p-button-text"></Button> -->
+  <!-- <Button @click="toggleMenu" icon="pi pi-cog" class="p-button-plain p-button-rounded p-button-text"></Button> -->
 </div>
+
+<!-- <OverlayPanel ref="menu" :popup="true" @show="isMenuShown=true" @hide="isMenuShown=false">
+  <Menu/>
+</OverlayPanel> -->
 
 <div :class="`mouse-move w-12rem fixed z-3 m-3 ${!visible ? `hidden` : ''}`">
   <Dropdown
@@ -69,15 +80,6 @@ const toggleFullscreen = () => {
     class="z-4 w-full "
     ref="dropdown"
   ></Dropdown>
-
-<!-- <p :class="`mouse-move p-card p-component p-3 mb-2 ${!visible ? `hidden` : ''}`">{{ $route.params.chapter }}</p>
-<Listbox
-    :modelValue="$route.params.chapter"
-    @update:modelValue="handleListClick"
-    :options="reader.chapterList"
-    class="z-4" style="width:15rem"
-    listStyle="height:250px">
-</Listbox> -->
 </div>
 
 <Chapter/>
@@ -90,26 +92,6 @@ const toggleFullscreen = () => {
 .pi-cog {
   font-size: 1.5rem !important;
 }
-
-// .chapter-info {
-//   p {
-//     width: fit-content;
-//     opacity: 0.8;
-//   }
-//   .p-listbox {
-//     opacity: 0;
-//     transition: opacity 500ms !important;
-//   }
-//   &:hover {
-//     p {
-//       opacity: 0.8 !important;
-//     }
-//     .p-listbox {
-//       opacity: 0.9;
-//       display: block;
-//     }
-//   }
-// }
 
 .mouse-move {
   opacity: 0.9;

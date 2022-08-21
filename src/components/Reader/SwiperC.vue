@@ -8,8 +8,8 @@ import Image from './Image.vue'
 
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Swiper as SwiperClass } from 'swiper/types'
-import { useRoute } from 'vue-router'
 
+import { useRoute } from 'vue-router'
 import { useReaderStore } from '../../stores/reader'
 
 const route = useRoute()
@@ -83,8 +83,6 @@ window.addEventListener("wheel", async function(e) {
 <div class="relative w-full h-full">
 
   <div class="absolute controls w-full h-screen">
-    <!-- <div @click="handlePrevSlide()" class="absolute left-0 w-6 h-screen z-2"></div>
-    <div @click="handleNextSlide()" class="absolute right-0 w-6 h-screen z-2"></div> -->
     <div 
       id="control-top"
       @click="handlePrevSlide()"
@@ -112,12 +110,14 @@ window.addEventListener("wheel", async function(e) {
       :space-between="12"
       :allow-touch-move="false"
       direction="vertical"
-      :observer="true"
+      :observer="true"      
       :speed="300"
       v-show="!reader.loadingChapter"
     >
       <SwiperSlide v-for="image in reader.chapterData.images" :key="`${reader.chapterData.path}/${image}`">
-        <Image class="w-full h-screen" :key="`${reader.chapterData.path}/${image}`" :localImage="`${reader.chapterData.path}/${image}`"/>
+        <div class="swiper-zoom-container">
+          <Image class="w-full h-screen" :key="`${reader.chapterData.path}/${image}`" :localImage="`${reader.chapterData.path}/${image}`"/>
+        </div>
       </SwiperSlide>
     </Swiper>
 

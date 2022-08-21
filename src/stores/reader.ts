@@ -24,8 +24,6 @@ export const useReaderStore = defineStore('reader', () => {
           path: `/read/${route.params.title}/${chapterList.value[0]}/0`
         })
     }
-    
-    // getChapterList()
 
     // Change chapters
 
@@ -59,12 +57,15 @@ export const useReaderStore = defineStore('reader', () => {
     })
 
     const updateChapterData = async () => {
+
         loadingChapter.value = true
-        
+
         chapterData.value = await invoke('get_chapter_by_title', {
             title: route.params.title,
             chapter: route.params.chapter
         })
+
+        updateTitle()
 
         loadingChapter.value = false
     }
@@ -74,10 +75,8 @@ export const useReaderStore = defineStore('reader', () => {
     watch(currentChapter, async (value, oldValue) => {
         if (value === oldValue) return 
         if (['-1', '0'].includes(value as string)) return
-
         updateChapterData()
-        updateTitle()
-    }, { immediate: true, deep: true })
+    })
 
     // Slider 
 

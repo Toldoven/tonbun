@@ -8,8 +8,6 @@ import Longstrip from './Longstrip.vue';
 
 <template>
 
-<!-- <p>{{route.path}}</p> -->
-
 <SwiperC/>
 <!-- <Longstrip/> -->
 

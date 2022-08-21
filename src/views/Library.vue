@@ -49,11 +49,11 @@ onMounted(async () => {
 
 </script>
 
+
+
 <template>
 
-<!-- <p>{{ $t('main.welcome', {company: 'Lokalise'}) }}</p> -->
-
-<Library v-if="prefs.value.lang"/>
+<Library v-if="prefs.value.lang" />
 <Language v-else @setLang="(e: string) => setLang(e)" />
 
 </template>

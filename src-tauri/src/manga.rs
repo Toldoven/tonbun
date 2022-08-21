@@ -124,9 +124,9 @@ pub fn get_chapter_images(path: &PathBuf) -> Vec<String> {
     images
 }
 
-pub fn get_manga_chapters(path: &PathBuf) -> Vec<Chapter> {
+pub fn get_manga_chapters_paths(manga_path: &PathBuf) -> Vec<PathBuf> {
 
-    let mut chapters: Vec<PathBuf> = read_dir(&path)
+    let mut chapters: Vec<PathBuf> = read_dir(&manga_path)
         .unwrap()
         .map(|chapter| chapter.unwrap().path())
         .filter(|chapter| chapter.is_dir())
@@ -135,8 +135,14 @@ pub fn get_manga_chapters(path: &PathBuf) -> Vec<Chapter> {
     sort_path_slice(&mut chapters);
 
     chapters
+}
+
+pub fn get_manga_chapters(manga_path: &PathBuf) -> Vec<Chapter> {
+
+    let chapters: Vec<PathBuf> = get_manga_chapters_paths(manga_path);
+
+    chapters
         .iter()
-        .filter(|chapter| chapter.is_dir())
         .map(|chapter| {
             return Chapter::new(
                 PathBuf::from(&chapter),
@@ -256,14 +262,6 @@ pub fn get_manga_cards() -> Vec<MangaCard> {
     manga_cards
 }
 
-// pub fn get_chapter_by_uuid(uuid: Uuid, index: usize) -> Chapter {
-
-//     let path = get_manga_path_and_meta_by_uuid(uuid).path;
-//     let chapters = get_manga_chapters(&path);
-
-//     chapters.get(index).unwrap().clone()
-// }
-
 pub fn get_chapter_by_title(title: &str, chapter: &str) -> Chapter {
 
     let mut path = manga_dir_title(title);
@@ -302,29 +300,13 @@ fn get_manga_by_uuid(uuid: Uuid) -> Manga {
     get_manga_by_path(&path)
 }
 
-// pub fn get_chapter_list_by_uuid(uuid: Uuid) -> Vec<String> {
-
-//     let path = get_manga_path_and_meta_by_uuid(uuid).path;
-//     let chapters = get_manga_chapters(&path);
-
-//     chapters.iter().map(|chapter|{
-//         chapter.path
-//             .file_name()
-//             .unwrap()
-//             .to_str()
-//             .unwrap()
-//             .to_string()
-//     }).collect()
-
-// }
-
 pub fn get_chapter_list_by_title(title: String) -> Vec<String> {
 
     let path = manga_dir_title(title.as_str());
-    let chapters = get_manga_chapters(&path);
+    let chapters = get_manga_chapters_paths(&path);
 
     chapters.iter().map(|chapter|{
-        chapter.path
+        chapter
             .file_name()
             .unwrap()
             .to_str()
@@ -338,20 +320,6 @@ pub fn get_manga_title_by_uuid(uuid: Uuid) -> String {
     let path = get_manga_path_and_meta_by_uuid(uuid).path;
     return path.file_name().unwrap().to_str().unwrap().to_string();
 }
-
-// pub fn get_manga_chapter_and_slide_by_uuid(uuid: Uuid) -> [String; 2] {
-//     let meta = get_manga_path_and_meta_by_uuid(uuid).meta;
-//     return [meta.chapter, meta.slide]
-// }
-
-// pub fn set_manga_chapter_and_slide_by_uuid(uuid: Uuid, chapter: i32, slide: i32) -> Result<(), Box<dyn Error>> {
-//     let mut manga = get_manga_by_uuid(uuid);
-//     manga.meta.chapter = chapter;
-//     manga.meta.slide = slide;
-//     manga.update_meta()?;
-
-//     Ok(())
-// }
 
 pub fn set_manga_chapter_and_slide_by_title(title: &str, chapter: &str, slide: i32) -> Result<(), Box<dyn Error>> {
     let mut manga = get_manga_by_path(&manga_dir_title(title));

@@ -7,12 +7,15 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "tonbun",
-    "version": "1.0.0"
+    "productName": "Tonbun",
+    "version": "1.0.1"
   },
   "tauri": {
     "allowlist": {
       "all": true,
+      "dialog": {
+        "all": true
+      },
       "fs": {          
         "scope": ["$APP/**/*", "$DOCUMENT/Mangas/**/*"]
       },
