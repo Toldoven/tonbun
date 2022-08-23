@@ -112,6 +112,8 @@ impl MangaMeta {
 
 pub fn get_chapter_images(path: &PathBuf) -> Vec<String> {
 
+    println!("{:?}", path);
+
     let mut images: Vec<String> = read_dir(path)
         .unwrap()
         .map(|image| image.unwrap().path())

@@ -7,6 +7,13 @@ const ru = {
     read: "Читать",
     delete: "Удалить",
     download: "Скачать",
+    reader: {
+        type: "Тип читалки",
+        types: {
+            slides: "Слайды",
+            long_strip: "Длинная полоса",
+        },
+    },
     error: {
         notFound: "Ничего не найдено",
         cantConnect: "Не получается подключиться к MangaDex"

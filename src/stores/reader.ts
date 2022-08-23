@@ -58,6 +58,8 @@ export const useReaderStore = defineStore('reader', () => {
 
     const updateChapterData = async () => {
 
+        if (['-1', '0'].includes(route.params.chapter as string)) return
+
         loadingChapter.value = true
 
         chapterData.value = await invoke('get_chapter_by_title', {
@@ -74,9 +76,8 @@ export const useReaderStore = defineStore('reader', () => {
     
     watch(currentChapter, async (value, oldValue) => {
         if (value === oldValue) return 
-        if (['-1', '0'].includes(value as string)) return
         updateChapterData()
-    })
+    }, { immediate: true })
 
     // Slider 
 

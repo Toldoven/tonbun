@@ -51,9 +51,9 @@ const toggleFullscreen = () => {
   webview.setFullscreen(fullscreen.value)
 }
 
-// const toggleMenu = (event) => {
-//   menu.value.toggle(event)
-// }
+const toggleMenu = (event) => {
+  menu.value.toggle(event)
+}
 
 </script>
 
@@ -63,12 +63,12 @@ const toggleFullscreen = () => {
 <div :class="`mouse-move fixed flex gap-2 flex-row-reverse z-3 right-0 m-3 ${!visible ? `hidden` : ''}`">
   <Button @click="webview.emit('tauri://close-requested')" v-if="fullscreen" icon="pi pi-times" class="p-button-plain p-button-rounded p-button-text"></Button>
   <Button @click="toggleFullscreen" :icon="`pi ${!fullscreen ? `pi-window-maximize` : `pi-window-minimize`}`" class="p-button-plain p-button-rounded p-button-text"></Button>
-  <!-- <Button @click="toggleMenu" icon="pi pi-cog" class="p-button-plain p-button-rounded p-button-text"></Button> -->
+  <Button @click="toggleMenu" icon="pi pi-cog" class="p-button-plain p-button-rounded p-button-text"></Button>
 </div>
 
-<!-- <OverlayPanel ref="menu" :popup="true" @show="isMenuShown=true" @hide="isMenuShown=false">
+<OverlayPanel ref="menu" :popup="true" @show="isMenuShown=true" @hide="isMenuShown=false">
   <Menu/>
-</OverlayPanel> -->
+</OverlayPanel>
 
 <div :class="`mouse-move w-12rem fixed z-3 m-3 ${!visible ? `hidden` : ''}`">
   <Dropdown

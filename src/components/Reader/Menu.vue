@@ -3,20 +3,28 @@
 import SelectButton from 'primevue/selectbutton'
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useReaderSettingsStore } from '../../stores/readerSettings';
 
-const selectedDirecton = ref('horizontal')
+// const selectedDirecton = ref('horizontal')
 
-const directions = [
-    'horizontal',
-    'vertical'
-]
+// const directions = [
+//     'horizontal',
+//     'vertical'
+// ]
 
-const selectedInvertDirections = ref(false)
+// const selectedInvertDirections = ref(false)
 
-const invertDirectons = [
-    'false',
-    'true'
-]
+// const invertDirectons = [
+//     'false',
+//     'true'
+// ]
+
+// const types = [
+//     'slides',
+//     'long_strip'
+// ]
+
+const settings = useReaderSettingsStore()
 
 const { t } = useI18n()
 
@@ -28,13 +36,20 @@ const { t } = useI18n()
 
 <div>
     <div class="menu-entry">
+        <p class="mb-2">{{ t('reader.type') }}</p>
+        <SelectButton
+            v-model="settings.type"
+            :options="settings.types"
+            :optionLabel="(e) => t(`reader.types.${e}`)"
+        />
+    </div>
+    <!-- <div class="menu-entry">
         <p class="mb-2">{{ t('reader.direction') }}</p>
         <SelectButton
             v-model="selectedDirecton"
             :options="directions"
             :optionLabel="(e) => t(`reader.directions.${e}`)"
-        />
-        <SelectButton
+        />        <SelectButton
             v-model="selectedInvertDirections"
             :options="invertDirectons"
             :optionLabel="(e) => t(`reader.invertDirections.${e}`)"
@@ -43,8 +58,7 @@ const { t } = useI18n()
     </div>
     <div class="menu-entry">
         <p class="mb-2">{{ t('reader.direction') }}</p>
-
-    </div>
+    </div> -->
     <!-- <div class="menu-entry">
         <p class="mb-2">{{ t('reader.direction') }}</p>
         <SelectButton

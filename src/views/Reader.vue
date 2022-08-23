@@ -31,7 +31,7 @@ onMounted(async () => {
         })
 
         await reader.getChapterList()
-        await reader.updateChapterData()
+        // await reader.updateChapterData()
 
         webview.show()
         webview.setFocus()

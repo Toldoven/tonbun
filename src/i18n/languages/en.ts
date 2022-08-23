@@ -8,6 +8,11 @@ const en = {
     delete: "Delete",
     download: "Download",
     reader: {
+        type: "Reader type",
+        types: {
+            slides: "Slides",
+            long_strip: "Long Strip",
+        },
         direction: "Scroll Direction",
         directions: {
             horizontal: "Horizontal",

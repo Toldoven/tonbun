@@ -14,12 +14,10 @@ const routes = [
   {
     path: '/read/:title',
     redirect: to => ({ path: `/read/${to.params.title}/0/0` }),
-    component: () => {},
   },
   {
     path: '/read/:title/:chapter',
     redirect: to => ({ path: `/read/${to.params.title}/${to.params.chapter}/0` }),
-    component: () => {},
   },
   {
     path: '/read/:title/:chapter/:slide',
@@ -27,6 +25,7 @@ const routes = [
     component: () => import('../views/Reader.vue'),
   }
 ]
+// @ts-ignore
 const router = createRouter({
     history: createWebHistory(),
     routes
