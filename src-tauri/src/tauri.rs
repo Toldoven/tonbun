@@ -3,7 +3,7 @@
   windows_subsystem = "windows"
 )]
 
-use super::config;
+use super::prefs;
 use super::manga;
 use super::connectors::mangadex::MangaDex;
 use std::env;
@@ -73,10 +73,10 @@ fn update_manga_order(order_list: Vec<manga::UuidOrderIndex>) {
 
 #[tauri::command]
 fn search_title(query: String, lang: String) -> Result<Value, String> {
-  match MangaDex::search(query, lang) {
-    Ok(result) => return Ok(result["data"].clone()),
-    Err(_) => return Err("No connection".into()),
-  }
+    return match MangaDex::search(query, lang) {
+        Ok(result) => Ok(result["data"].clone()),
+        Err(_) => Err("No connection".into()),
+    }
 }
 
 #[tauri::command]
@@ -98,13 +98,13 @@ fn download_manga(uuid: String, lang: String, title: String, window: tauri::Wind
 }
 
 #[tauri::command(async)]
-fn load_prefs() -> config::Prefs {
-  config::Prefs::read().unwrap()
+fn load_prefs() -> prefs::Prefs {
+  prefs::Prefs::read().unwrap()
 }
 
 #[tauri::command(async)]
-fn save_prefs(prefs: config::Prefs) {
-  match config::Prefs::write(prefs) {
+fn save_prefs(prefs: prefs::Prefs) {
+  match prefs::Prefs::write(prefs) {
     Ok(()) => println!("Updated prefs"),
     Err(_) => println!("Failed to update prefs"),
   }
@@ -112,7 +112,7 @@ fn save_prefs(prefs: config::Prefs) {
 
 #[tauri::command(async)]
 fn update_manga_dir(dir: PathBuf) {
-  config::update_manga_dir(dir);
+  prefs::update_manga_dir(dir);
 }
 
 #[tauri::command]

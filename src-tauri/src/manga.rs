@@ -1,5 +1,5 @@
-use crate::config::manga_dir;
-use crate::config::manga_dir_title;
+use crate::prefs::manga_dir;
+use crate::prefs::manga_dir_title;
 use std::fs::remove_dir_all;
 use std::fs::{read_to_string, read_dir, write, copy};
 use serde::{Serialize, Deserialize};
@@ -112,7 +112,7 @@ impl MangaMeta {
 
 pub fn get_chapter_images(path: &PathBuf) -> Vec<String> {
 
-    println!("{:?}", path);
+    // println!("{:?}", path);
 
     let mut images: Vec<String> = read_dir(path)
         .unwrap()

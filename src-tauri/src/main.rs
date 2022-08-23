@@ -2,10 +2,10 @@
 
 mod tauri;
 pub mod manga;
-mod config;
+mod prefs;
 pub mod connectors;
 
 fn main() {
-  config::run();
+  prefs::run();
   tauri::run();
 }

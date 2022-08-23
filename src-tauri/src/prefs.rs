@@ -7,7 +7,7 @@ use tauri::generate_context;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Window {
-    fullscreen: bool, 
+    fullscreen: bool,
     size: (i32, i32),
 }
 
@@ -86,9 +86,7 @@ impl Prefs {
     pub fn read() -> Result<Prefs, Box<dyn Error>> {
         let prefs_path = Prefs::prefs_path();
 
-        if !prefs_path.exists() {
-            Prefs::write(Prefs::default())?;
-        }
+        if !prefs_path.exists() { Prefs::write(Prefs::default())?; }
 
         let read_prefs: Result<Prefs, toml::de::Error> = toml::from_str(read_to_string(&prefs_path)?.as_str());
 

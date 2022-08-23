@@ -8,7 +8,7 @@ use std::fs::{create_dir_all};
 use std::path::{PathBuf, Path};
 use serde::{Serialize, Deserialize};
 use crate::manga::{ MangaMeta, create_custom_meta };
-use crate::config::manga_dir;
+use crate::prefs::manga_dir;
 // use uuid::{uuid, Uuid};
 
 use uuid::{Uuid};
