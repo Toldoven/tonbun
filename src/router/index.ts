@@ -1,6 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import Library from '../views/Library.vue'
-const routes = [
+
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Library',
@@ -25,7 +26,6 @@ const routes = [
     component: () => import('../views/Reader.vue'),
   }
 ]
-// @ts-ignore
 const router = createRouter({
     history: createWebHistory(),
     routes
