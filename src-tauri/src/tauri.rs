@@ -3,12 +3,14 @@
   windows_subsystem = "windows"
 )]
 
-use super::config;
+use super::prefs;
 use super::manga;
 use super::connectors::mangadex::MangaDex;
 use std::env;
+use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
+use tauri::Manager;
 use uuid::{Uuid};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -17,9 +19,6 @@ struct DownloadingError {
   title: String,
   message: String,
 }
-
-
-// use crate::connectors::Connector;
 
 #[tauri::command(async)]
 fn message(message: String) {
@@ -32,13 +31,13 @@ fn get_manga_cards() -> Vec<manga::MangaCard> {
 }
 
 #[tauri::command(async)]
-fn get_chapter_by_uuid(uuid: &str, index: usize) -> manga::Chapter {
-  manga::get_chapter_by_uuid(Uuid::parse_str(uuid).unwrap(), index)
+fn get_chapter_by_title(title: &str, chapter: &str) -> manga::Chapter {
+  manga::get_chapter_by_title(title, chapter)
 }
 
 #[tauri::command(async)]
-fn get_chapter_list_by_uuid(uuid: &str) -> Vec<String> {
-  manga::get_chapter_list_by_uuid(Uuid::parse_str(uuid).unwrap())
+fn get_chapter_list_by_title(title: String) -> Vec<String> {
+  manga::get_chapter_list_by_title(title)
 }
 
 #[tauri::command(async)]
@@ -47,8 +46,8 @@ fn get_manga_title_by_uuid(uuid: &str) -> String {
 }
 
 #[tauri::command(async)]
-fn get_manga_chapter_and_slide_by_uuid(uuid: &str) -> [i32; 2] {
-  manga::get_manga_chapter_and_slide_by_uuid(Uuid::parse_str(uuid).unwrap())
+fn get_manga_meta_by_title(title: &str) -> manga::MangaMeta {
+  manga::get_manga_meta_by_title(title)
 }
 
 #[tauri::command(async)]
@@ -57,10 +56,10 @@ fn delete_manga_by_uuid(uuid: &str) {
 }
 
 #[tauri::command(async)]
-fn set_manga_chapter_and_slide_by_uuid(uuid: &str, chapter: i32, slide: i32) {
-  match manga::set_manga_chapter_and_slide_by_uuid(Uuid::parse_str(uuid).unwrap(), chapter, slide) {
-    Ok(()) => println!("Updated chapter ({}) and slide ({}) of {}", chapter, slide, uuid),
-    Err(_) => println!("Failed to update chapter and slide of {}", uuid),
+fn set_manga_chapter_and_slide_by_title(title: &str, chapter: &str, slide: i32) {
+  match manga::set_manga_chapter_and_slide_by_title(title, chapter, slide) {
+    Ok(()) => println!("Updated chapter ({}) and slide ({}) of {}", chapter, slide, title),
+    Err(_) => println!("Failed to update chapter and slide of {}", title),
   }
 }
 
@@ -74,10 +73,10 @@ fn update_manga_order(order_list: Vec<manga::UuidOrderIndex>) {
 
 #[tauri::command]
 fn search_title(query: String, lang: String) -> Result<Value, String> {
-  match MangaDex::search(query, lang) {
-    Ok(result) => return Ok(result["data"].clone()),
-    Err(_) => return Err("No connection".into()),
-  }
+    return match MangaDex::search(query, lang) {
+        Ok(result) => Ok(result["data"].clone()),
+        Err(_) => Err("No connection".into()),
+    }
 }
 
 #[tauri::command]
@@ -99,20 +98,34 @@ fn download_manga(uuid: String, lang: String, title: String, window: tauri::Wind
 }
 
 #[tauri::command(async)]
-fn load_prefs() -> config::Prefs {
-  config::Prefs::read().unwrap()
+fn load_prefs() -> prefs::Prefs {
+  prefs::Prefs::read().unwrap()
 }
 
 #[tauri::command(async)]
-fn save_prefs(prefs: config::Prefs) {
-  match config::Prefs::write(prefs) {
-    Ok(()) => println!("Updated manga order"),
-    Err(_) => println!("Failed to update config"),
+fn save_prefs(prefs: prefs::Prefs) {
+  match prefs::Prefs::write(prefs) {
+    Ok(()) => println!("Updated prefs"),
+    Err(_) => println!("Failed to update prefs"),
   }
 }
 
+#[tauri::command(async)]
+fn update_manga_dir(dir: PathBuf) {
+  prefs::update_manga_dir(dir);
+}
+
+#[tauri::command]
+fn change_reader_url(url: String, app_handle: tauri::AppHandle) {
+  let window = app_handle.get_window("reader").unwrap();
+  let js = format!("window.location.replace('{}')", url);
+  let _ = window.eval(js.as_str());
+}
+
+
 pub fn run() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_persisted_scope::init())
     .invoke_handler(tauri::generate_handler![
       message,
       search_title,
@@ -122,11 +135,13 @@ pub fn run() {
       get_manga_cards,
       update_manga_order,
       get_manga_title_by_uuid,
-      get_chapter_list_by_uuid,
-      get_chapter_by_uuid,
-      get_manga_chapter_and_slide_by_uuid,
-      set_manga_chapter_and_slide_by_uuid,
+      get_chapter_list_by_title,
+      get_chapter_by_title,
+      set_manga_chapter_and_slide_by_title,
+      get_manga_meta_by_title,
       delete_manga_by_uuid,
+      update_manga_dir,
+      change_reader_url,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

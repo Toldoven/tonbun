@@ -1,0 +1,104 @@
+<script setup lang="ts">
+
+import { appWindow } from '@tauri-apps/api/window';
+import { onMounted, ref } from 'vue';
+import { useReaderStore } from '../../stores/reader'
+import Chapter from './Chapter.vue'
+
+import Button from 'primevue/button'
+import Dropdown from 'primevue/dropdown'
+import OverlayPanel from 'primevue/overlaypanel'
+import Menu from './Menu.vue';
+
+const reader = useReaderStore()
+
+const lastMove = ref(Date.now())
+const visible = ref(false)
+
+const webview = appWindow
+const menu = ref(null)
+
+const dropdown = ref(null)
+
+const isDropdownShown = ref(false)
+const isMenuShown = ref(false)
+
+const handleListClick = (e) => reader.setChapter(e.value)
+
+onMounted(async () => {
+
+    window.addEventListener('mousemove', (event) => {
+        visible.value = true
+
+        const whenRun = Date.now()
+        lastMove.value = whenRun
+
+        setTimeout(async () => {
+            if (lastMove.value != whenRun) return
+            if (isDropdownShown.value || isMenuShown.value) return
+            visible.value = false
+            dropdown.value.hide()
+        }, 1500)
+    })
+
+    fullscreen.value = await webview.isFullscreen()
+})
+
+const fullscreen = ref(false)
+
+const toggleFullscreen = () => {
+  fullscreen.value = !fullscreen.value
+  webview.setFullscreen(fullscreen.value)
+}
+
+const toggleMenu = (event) => {
+  menu.value.toggle(event)
+}
+
+</script>
+
+
+<template>
+
+<div :class="`mouse-move fixed flex gap-2 flex-row-reverse z-3 right-0 m-3 ${!visible ? `hidden` : ''}`">
+  <Button @click="webview.emit('tauri://close-requested')" v-if="fullscreen" icon="pi pi-times" class="p-button-plain p-button-rounded p-button-text"></Button>
+  <Button @click="toggleFullscreen" :icon="`pi ${!fullscreen ? `pi-window-maximize` : `pi-window-minimize`}`" class="p-button-plain p-button-rounded p-button-text"></Button>
+  <Button @click="toggleMenu" icon="pi pi-cog" class="p-button-plain p-button-rounded p-button-text"></Button>
+</div>
+
+<OverlayPanel ref="menu" :popup="true" @show="isMenuShown=true" @hide="isMenuShown=false">
+  <Menu/>
+</OverlayPanel>
+
+<div :class="`mouse-move w-12rem fixed z-3 m-3 ${!visible ? `hidden` : ''}`">
+  <Dropdown
+    :modelValue="$route.params.chapter"
+    @change="handleListClick"
+    @show="isDropdownShown = true"
+    @hide="isDropdownShown = false"
+    :options="reader.chapterList"
+    class="z-4 w-full "
+    ref="dropdown"
+  ></Dropdown>
+</div>
+
+<Chapter/>
+
+</template>
+
+
+<style lang="scss">
+
+.pi-cog {
+  font-size: 1.5rem !important;
+}
+
+.mouse-move {
+  opacity: 0.9;
+  transition: opacity 300ms;
+  &.hidden {
+    opacity: 0;
+  }
+}
+
+</style>

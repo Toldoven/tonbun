@@ -2,9 +2,9 @@
 
 import Skeleton from 'primevue/skeleton'
 import Button from 'primevue/button'
-import { WebviewWindow } from '@tauri-apps/api/window'
+import { WebviewWindow, appWindow } from '@tauri-apps/api/window'
 
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import { invoke, convertFileSrc } from '@tauri-apps/api/tauri'
 import { loadWindowPrefs } from '../../../lib/window'
@@ -20,7 +20,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  title: String,
+  title: {
+    type: String,
+    required: true,
+  },
   localCover: {
     type: String,
     required: true,
@@ -32,26 +35,35 @@ const cover = convertFileSrc(props.localCover)
 
 const loading = ref(false)
 
-async function handleRead() {
+const cWebview = appWindow
+
+onMounted(() => {
+  cWebview.listen('change_url', (event: any) => console.log(event.payload))
+})
+
+const handleRead = async () => {
   try {
 
-    loading.value = true;
-
-    await WebviewWindow.getByLabel('reader')?.close()
-
-    const chapter_and_slide: Array<number> = await invoke('get_manga_chapter_and_slide_by_uuid', { uuid: props.uuid })
-
-    const webview = new WebviewWindow('reader', {
-      url: `read/${props.uuid}?title=${props.title}&chapter=${chapter_and_slide[0]}&slide=${chapter_and_slide[1]}`,
-    })
-  
-    webview.once('tauri://created', async () => {
-      webview.hide()
-      props.title && webview.setTitle(props.title)
-      loadWindowPrefs(webview)
-    })
-
+    loading.value = true
     setTimeout(() => loading.value = false, 500)
+
+    const meta: any = await invoke('get_manga_meta_by_title', { title: props.title })
+    const url = `/read/${props.title}/${meta.chapter}/${meta.slide}`
+
+    let webview = WebviewWindow.getByLabel('reader')
+
+    if (webview) {
+      invoke('change_reader_url', { url: url })
+      webview.hide()
+    } else {
+      webview = new WebviewWindow('reader', { url } )
+      webview.once('tauri://created', async () => {
+        webview.hide()
+        webview.setTitle(props.title)
+      })
+    }
+
+    loadWindowPrefs(webview)
 
   } catch (e) {
     invoke('message', { message: e })

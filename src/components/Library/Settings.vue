@@ -2,6 +2,9 @@
 
 import Dialog from 'primevue/dialog'
 import SelectButton from 'primevue/selectbutton'
+import InputText from 'primevue/inputtext'
+import Button from 'primevue/button'
+import { open } from '@tauri-apps/api/dialog'
 
 
 // import Button from 'primevue/button'
@@ -9,9 +12,12 @@ import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { usePrefsStore } from '../../stores/prefs';
 import { useSettingsModalStore } from '../../stores/settingsModal';
+import { useLibraryCardsStore } from '../../stores/libraryCards'
+import { invoke } from '@tauri-apps/api/tauri'
 
 const settingsModal = useSettingsModalStore()
 const prefs = usePrefsStore()
+const libraryCards = useLibraryCardsStore()
 
 const selectedLanguage = ref<String>('en')
 
@@ -19,6 +25,18 @@ const languages = [
     {name: 'English', code: 'en'},
     {name: 'Русский', code: 'ru'},
 ]
+
+const handleDirectorySelect = async () => {
+    try {
+       const dir = await open({ directory: true })
+        if (!dir) return
+        await invoke('update_manga_dir', { dir })
+        await prefs.loadPrefs()
+        await libraryCards.update()
+    } catch (e) {
+        console.error(e)
+    }
+}
 
 onMounted(() => {
     selectedLanguage.value = prefs.value.lang
@@ -36,8 +54,30 @@ const { t } = useI18n()
 <template>
 
 <Dialog :header="t('settings')" v-model:visible="settingsModal.value" :modal="true" :draggable="false" style="width: 512px">
-    <p class="mb-2">{{ t('language') }}</p>
-    <SelectButton v-model="selectedLanguage" :options="languages" option-label="name" option-value="code"/>
+    <div class="setting-entry">
+        <p class="mb-2">{{ t('language') }}</p>
+        <SelectButton v-model="selectedLanguage" :options="languages" option-label="name" option-value="code"/>
+    </div>
+    <div class="setting-entry">
+        <p class="mb-2">{{ t('folder') }}</p>
+        <div class="flex gap-2">
+            <InputText :value="prefs.value.manga_directory" class="flex-grow-1 fake-disabled" disabled="true"></InputText>
+            <Button @click="handleDirectorySelect">{{ t('select') }}</Button>
+        </div>
+    </div>
 </Dialog>
 
 </template>
+
+
+<style lang="scss">
+
+.fake-disabled {
+    opacity: 1 !important;
+}
+
+.setting-entry + .setting-entry {
+    margin-top: 1.5rem;
+}
+
+</style>

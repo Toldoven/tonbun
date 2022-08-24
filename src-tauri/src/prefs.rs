@@ -1,25 +1,13 @@
-use tauri::api::path::{document_dir};
+use tauri::api::path::{document_dir, app_dir};
 use std::fs::{create_dir_all, read_to_string, write};
 use std::path::PathBuf;
 use std::error::Error;
 use serde::{Serialize, Deserialize};
-
-pub fn manga_dir() -> PathBuf {
-    let mut manga_dir = document_dir().unwrap();
-    manga_dir.push("Mangas");
-    manga_dir
-}
-
-pub fn manga_dir_title(title: &str) -> PathBuf {
-    let mut manga_dir = document_dir().unwrap();
-    manga_dir.push("Mangas");
-    manga_dir.push(title);
-    manga_dir
-}
+use tauri::generate_context;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Window {
-    fullscreen: bool, 
+    fullscreen: bool,
     size: (i32, i32),
 }
 
@@ -55,19 +43,28 @@ pub struct Reader {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Prefs {
     lang: String,
+    manga_directory: PathBuf,
     windows: Windows,
     reader: Reader,
 }
 
+pub fn default_manga_dir() -> PathBuf {
+    let mut manga_dir = document_dir().unwrap();
+    manga_dir.push("Mangas");
+    manga_dir
+}
+
 impl Prefs {
     fn prefs_path() -> PathBuf {
-        let mut prefs_path = manga_dir();
+        let context = generate_context!();
+        let mut prefs_path = app_dir(context.config()).unwrap();
         prefs_path.push("prefs.toml");
         prefs_path
     }
     fn default() -> Prefs {
         Prefs {
             lang: "".to_string(),
+            manga_directory: default_manga_dir(),
             windows: Windows {
                 reader: Window {
                     fullscreen: false,
@@ -89,9 +86,7 @@ impl Prefs {
     pub fn read() -> Result<Prefs, Box<dyn Error>> {
         let prefs_path = Prefs::prefs_path();
 
-        if !prefs_path.exists() {
-            Prefs::write(Prefs::default())?;
-        }
+        if !prefs_path.exists() { Prefs::write(Prefs::default())?; }
 
         let read_prefs: Result<Prefs, toml::de::Error> = toml::from_str(read_to_string(&prefs_path)?.as_str());
 
@@ -113,15 +108,24 @@ impl Prefs {
     }
 }
 
+pub fn manga_dir() -> PathBuf {
+    Prefs::read().unwrap().manga_directory
+}
+
+pub fn manga_dir_title(title: &str) -> PathBuf {
+    let mut manga_dir = manga_dir();
+    manga_dir.push(title);
+    manga_dir
+}
+
+pub fn update_manga_dir(dir: PathBuf) {
+    let mut prefs = Prefs::read().unwrap();
+    prefs.manga_directory = PathBuf::from(&dir);
+    Prefs::write(prefs).unwrap();
+    create_dir_all(&dir).unwrap();
+}
+
 pub fn run() {
-
     let manga_dir = manga_dir();
-
-    let result = create_dir_all(&manga_dir);
-
-    match result {
-        Ok(()) => {},
-        Err(_) => {},
-    }
-    
+    create_dir_all(&manga_dir).unwrap();
 }

@@ -35,10 +35,14 @@ export const useLibraryCardsStore = defineStore('libraryCards', () => {
     }
     
     const deleteMangaByUuid = async (uuid: string) => {
-        await invoke('delete_manga_by_uuid', { uuid })
-        const find: any = value.value.find((card: any) => card.uuid === uuid)
-        const index = value.value.indexOf(find)
-        if (index > -1) value.value.splice(index, 1)
+        try {
+            await invoke('delete_manga_by_uuid', { uuid })
+            const find: any = value.value.find((card: any) => card.uuid === uuid)
+            const index = value.value.indexOf(find)
+            if (index > -1) value.value.splice(index, 1)
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     // Downloading
@@ -46,13 +50,9 @@ export const useLibraryCardsStore = defineStore('libraryCards', () => {
     const downloading = ref<any>({})
     
     const setDownloadingState = (uuid: string, chapter: Number, outOf: Number | undefined) => {
-
         if (outOf) downloading.value[uuid].outOf = outOf
-
         if (downloading.value[uuid]) downloading.value[uuid].chapter = chapter
-
         if (chapter === downloading.value[uuid].outOf) delete downloading.value[uuid]
-        
     }
 
     const startDownloading = (uuid: string) => {

@@ -8,7 +8,7 @@ use std::fs::{create_dir_all};
 use std::path::{PathBuf, Path};
 use serde::{Serialize, Deserialize};
 use crate::manga::{ MangaMeta, create_custom_meta };
-use crate::config::manga_dir;
+use crate::prefs::manga_dir;
 // use uuid::{uuid, Uuid};
 
 use uuid::{Uuid};
@@ -190,7 +190,7 @@ impl MangaDex {
     fn create_meta(manga_uuid: &str, manga_path: &PathBuf) -> Result<(), Box<dyn Error>> {
         let uuid = Uuid::parse_str(manga_uuid)?;
         create_custom_meta(&manga_path, MangaMeta::new(
-            uuid, "MangaDex", -1, 0, 0, vec![]))?;
+            uuid, "MangaDex", -1, "0", 0, vec![]))?;
 
         Ok(())
     }

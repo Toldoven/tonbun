@@ -6,8 +6,7 @@ const props = defineProps({
   localImage: {
     type: String,
     required: true
-  },
-  chapter: Number,
+  }
 })
 
 const image = convertFileSrc(props.localImage)
@@ -17,7 +16,7 @@ const image = convertFileSrc(props.localImage)
 
 <template>
 
-<img v-show="image" :src="image" class="w-full h-screen"/>
+<img v-show="image" :src="image"/>
 
 </template>
 
