@@ -3,14 +3,19 @@
   windows_subsystem = "windows"
 )]
 
-use super::prefs;
+use crate::prefs::Prefs;
+use crate::prefs;
+
 use super::manga;
 use super::connectors::mangadex::MangaDex;
 use std::env;
 use std::path::PathBuf;
+use std::sync::Arc;
+use std::sync::Mutex;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 use tauri::Manager;
+use tauri::State;
 use uuid::{Uuid};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -19,6 +24,12 @@ struct DownloadingError {
   title: String,
   message: String,
 }
+
+// Prefs
+
+struct PrefsStore(Arc<Mutex<Prefs>>);
+
+// Commands
 
 #[tauri::command(async)]
 fn message(message: String) {
@@ -97,18 +108,18 @@ fn download_manga(uuid: String, lang: String, title: String, window: tauri::Wind
   });
 }
 
-#[tauri::command(async)]
-fn load_prefs() -> prefs::Prefs {
-  prefs::Prefs::read().unwrap()
-}
+// #[tauri::command(async)]
+// fn load_prefs() -> prefs::Prefs {
+//   prefs::Prefs::read().unwrap()
+// }
 
-#[tauri::command(async)]
-fn save_prefs(prefs: prefs::Prefs) {
-  match prefs::Prefs::write(prefs) {
-    Ok(()) => println!("Updated prefs"),
-    Err(_) => println!("Failed to update prefs"),
-  }
-}
+// #[tauri::command(async)]
+// fn save_prefs(prefs: prefs::Prefs) {
+//   match prefs::Prefs::write(prefs) {
+//     Ok(()) => println!("Updated prefs"),
+//     Err(_) => println!("Failed to update prefs"),
+//   }
+// }
 
 #[tauri::command(async)]
 fn update_manga_dir(dir: PathBuf) {
@@ -122,16 +133,43 @@ fn change_reader_url(url: String, app_handle: tauri::AppHandle) {
   let _ = window.eval(js.as_str());
 }
 
+#[tauri::command(async)]
+fn read_prefs(prefs: State<'_, PrefsStore>) -> Prefs {
+  prefs.0.lock().unwrap().clone()
+}
+
+#[tauri::command(async)]
+fn set_lang(lang: String, prefs: State<'_, PrefsStore>, window: tauri::Window) {
+  let mut prefs = prefs.0.lock().unwrap();
+  prefs.lang = lang;
+  window.emit_all("update_prefs", prefs.clone()).unwrap();
+}
+
+#[tauri::command(async)]
+fn set_window_prefs(label: String, window: prefs::Window, prefs: State<'_, PrefsStore>, webview: tauri::Window) {
+  let mut prefs = prefs.0.lock().unwrap();
+  if label == "reader" { prefs.windows.reader = window.clone() };
+  if label == "library" { prefs.windows.library = window.clone() };
+  webview.emit_all("update_prefs", prefs.clone()).unwrap();
+}
+
+#[tauri::command(async)]
+fn save_prefs(prefs: State<'_, PrefsStore>) {
+  let prefs = prefs.0.lock().unwrap();
+  match prefs.save() {
+    Ok(_) => println!("Saved Prefs: {:?}", prefs),
+    Err(_) => println!("Couldn't save Prefs: {:?}", prefs),
+  }
+}
 
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_persisted_scope::init())
+    .manage(PrefsStore(Arc::new(Mutex::new(Prefs::load().unwrap()))))
     .invoke_handler(tauri::generate_handler![
       message,
       search_title,
       download_manga,
-      save_prefs,
-      load_prefs,
       get_manga_cards,
       update_manga_order,
       get_manga_title_by_uuid,
@@ -142,6 +180,10 @@ pub fn run() {
       delete_manga_by_uuid,
       update_manga_dir,
       change_reader_url,
+      read_prefs,
+      save_prefs,
+      set_lang,
+      set_window_prefs,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

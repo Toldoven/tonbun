@@ -3,13 +3,15 @@
 import { useI18n } from 'vue-i18n';
 import Toast from 'primevue/toast'
 import { usePrefsStore } from './stores/prefs';
-import { onMounted, watch } from 'vue';
+import { onBeforeMount, onMounted, watch } from 'vue';
 
 const { t, locale } = useI18n();
 
 const prefs = usePrefsStore()
 
-prefs.loadPrefs()
+// onBeforeMount(async () => {
+//   await prefs.loadPrefs()
+// })
 
 watch(prefs, () => {
   if (prefs.value.lang) locale.value = prefs.value.lang

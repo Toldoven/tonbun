@@ -5,20 +5,31 @@ use std::error::Error;
 use serde::{Serialize, Deserialize};
 use tauri::generate_context;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Window {
-    fullscreen: bool,
-    size: (i32, i32),
+    pub fullscreen: bool,
+    pub x: i32,
+    pub y: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+impl Window {
+    pub fn new(fullscreen: bool, x: i32, y: i32) -> Window {
+        Window {
+            fullscreen,
+            x,
+            y,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Windows {
-    reader: Window,
-    library: Window,
+    pub reader: Window,
+    pub library: Window,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-enum Direction {
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum Direction {
     Horizontal,
     Vertical,
 }
@@ -32,20 +43,20 @@ enum Direction {
 //     }
 // }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Reader {
-    direction: Direction,
-    reverse: bool,
-    animation: bool,
-    animation_speed: u32,
+    pub direction: Direction,
+    pub reverse: bool,
+    pub animation: bool,
+    pub animation_speed: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Prefs {
-    lang: String,
-    manga_directory: PathBuf,
-    windows: Windows,
-    reader: Reader,
+    pub lang: String,
+    pub manga_directory: PathBuf,
+    pub windows: Windows,
+    pub reader: Reader,
 }
 
 pub fn default_manga_dir() -> PathBuf {
@@ -53,6 +64,8 @@ pub fn default_manga_dir() -> PathBuf {
     manga_dir.push("Mangas");
     manga_dir
 }
+
+
 
 impl Prefs {
     fn prefs_path() -> PathBuf {
@@ -66,14 +79,8 @@ impl Prefs {
             lang: "".to_string(),
             manga_directory: default_manga_dir(),
             windows: Windows {
-                reader: Window {
-                    fullscreen: false,
-                    size: (600, 900),
-                },
-                library: Window {
-                    fullscreen: false,
-                    size: (800, 600),
-                },
+                reader: Window::new(false, 600, 900),
+                library: Window::new(false, 600, 900),
             },
             reader: Reader {
                 direction: Direction::Vertical,
@@ -83,7 +90,7 @@ impl Prefs {
             },
         }
     }
-    pub fn read() -> Result<Prefs, Box<dyn Error>> {
+    pub fn load() -> Result<Prefs, Box<dyn Error>> {
         let prefs_path = Prefs::prefs_path();
 
         if !prefs_path.exists() { Prefs::write(Prefs::default())?; }
@@ -106,10 +113,22 @@ impl Prefs {
 
         Ok(())
     }
+    // pub fn set_lang(&mut self, lang: &str) {
+    //     self.lang = lang.to_string();
+    // }
+    // pub fn update_value(&mut self, key: &str, value: &dyn Any) {
+    //     self[key] = value;
+    // }
+    pub fn save(&self) -> Result<(), Box<dyn Error>> {
+        let prefs_path = Prefs::prefs_path();
+        write(&prefs_path, toml::to_string(self)?.as_bytes())?;
+
+        Ok(())
+    }
 }
 
 pub fn manga_dir() -> PathBuf {
-    Prefs::read().unwrap().manga_directory
+    Prefs::load().unwrap().manga_directory
 }
 
 pub fn manga_dir_title(title: &str) -> PathBuf {
@@ -119,10 +138,10 @@ pub fn manga_dir_title(title: &str) -> PathBuf {
 }
 
 pub fn update_manga_dir(dir: PathBuf) {
-    let mut prefs = Prefs::read().unwrap();
-    prefs.manga_directory = PathBuf::from(&dir);
-    Prefs::write(prefs).unwrap();
     create_dir_all(&dir).unwrap();
+    let mut prefs = Prefs::load().unwrap();
+    prefs.manga_directory = PathBuf::from(&dir);
+    prefs.save().unwrap();
 }
 
 pub fn run() {

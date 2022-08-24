@@ -9,6 +9,7 @@ import Language from '../components/Language.vue'
 
 import { useLibraryCardsStore } from '../stores/libraryCards'
 import { usePrefsStore } from '../stores/prefs'
+import { invoke } from '@tauri-apps/api'
 
 const webview: WindowManager = appWindow
 const libraryCards = useLibraryCardsStore()
@@ -19,29 +20,38 @@ const closeReader = async () => {
   await reader.close()
 }
 
+const prefs = usePrefsStore()
+
 const setupWindow = async (webview: WindowManager) => {
-  await loadWindowPrefs(webview)
-  webview.show()
+  try {
 
-  addFullscreenEventListener(window, webview)
+    addFullscreenEventListener(window, webview)
 
-  webview.once('tauri://close-requested', async () => {
+    webview.once('tauri://close-requested', async () => {
+      await Promise.all([
+        saveWindowPrefs(webview),
+        libraryCards.saveOrder(),
+        closeReader()
+      ])
+      await invoke('save_prefs')
+      webview.close()
+    })
 
-    await Promise.all([
-      saveWindowPrefs(webview),
-      libraryCards.saveOrder(),
-      closeReader()
-    ])
+    await prefs.loadPrefs()
+    
+    await loadWindowPrefs(webview, prefs.value)
 
-    webview.close()
-  })
+  } catch (e) {
+
+  } finally {
+    webview.show()
+  }
+
 }
 
 const setLang = (selectedLang: string) => {
   prefs.setLang(selectedLang)
 }
-
-const prefs = usePrefsStore()
 
 onMounted(async () => {
   setupWindow(webview)

@@ -7,7 +7,6 @@ import { WebviewWindow, appWindow } from '@tauri-apps/api/window'
 import { onMounted, ref } from 'vue'
 
 import { invoke, convertFileSrc } from '@tauri-apps/api/tauri'
-import { loadWindowPrefs } from '../../../lib/window'
 import { useLibraryCardsStore } from '../../../stores/libraryCards'
 import { useEditModalStore } from '../../../stores/editModal'
 import { useI18n } from 'vue-i18n'
@@ -62,8 +61,6 @@ const handleRead = async () => {
         webview.setTitle(props.title)
       })
     }
-
-    loadWindowPrefs(webview)
 
   } catch (e) {
     invoke('message', { message: e })

@@ -29,4 +29,5 @@ import 'primeflex/primeflex.css'
 
 import 'swiper/css'
 import 'swiper/css/keyboard'
+import 'swiper/css/lazy'
 import './assets/fonts.scss'

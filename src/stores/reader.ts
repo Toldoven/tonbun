@@ -51,10 +51,16 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Chapter Data 
 
-    const chapterData = ref({
+    const chapterDataDefault = {
         path: '',
         images: [],
-    })
+    }
+
+    const chapterData = ref(chapterDataDefault)
+
+    const resetChapterData = () => {
+        chapterData.value = chapterDataDefault
+    }
 
     const updateChapterData = async () => {
 
@@ -91,5 +97,5 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Return
 
-    return { chapterList, loadingChapter, getChapterList, updateChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter }
+    return { chapterList, loadingChapter, getChapterList, updateChapterData, resetChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter }
 })

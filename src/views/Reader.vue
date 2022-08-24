@@ -5,16 +5,20 @@ import { appWindow } from '@tauri-apps/api/window'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Reader from '../components/Reader/Reader.vue'
-import { addFullscreenEventListener, saveWindowPrefs } from '../lib/window'
+import { addFullscreenEventListener, loadWindowPrefs, saveWindowPrefs } from '../lib/window'
+import { usePrefsStore } from '../stores/prefs'
 import { useReaderStore } from '../stores/reader'
 
 const route = useRoute()
 const reader = useReaderStore()
+const prefs = usePrefsStore()
 
 const webview = appWindow
 
 onMounted(async () => {
     try {
+
+        reader.resetChapterData()
 
         addFullscreenEventListener(window, webview)
 
@@ -30,14 +34,16 @@ onMounted(async () => {
             webview.hide()
         })
 
-        await reader.getChapterList()
-        // await reader.updateChapterData()
-
-        webview.show()
-        webview.setFocus()
+        await Promise.all([
+            reader.getChapterList(),
+            prefs.loadPrefs().then(() => loadWindowPrefs(webview, prefs.value)),
+        ])
 
     } catch (e) {
         invoke('message', { message: e })
+    } finally {
+        webview.show()
+        webview.setFocus()
     }
 })
 
