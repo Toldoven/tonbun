@@ -63,7 +63,7 @@ const { t } = useI18n()
 <template>
   <main class="h-full p-3 relative">
 
-    <Button @click="settingsModal.value = true" icon="pi pi-cog" class="p-button-rounded fixed bottom-0 right-0 m-4 z-3"/>
+      <Button @click="settingsModal.value = true" icon="pi pi-cog" class="p-button-rounded fixed bottom-0 right-0 m-4 z-3"></Button>
 
     <Edit/>
     <Settings/>

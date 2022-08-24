@@ -34,7 +34,7 @@ const setupWindow = async (webview: WindowManager) => {
         closeReader()
       ])
       await invoke('save_prefs')
-      webview.close()
+      await webview.close()
     })
 
     await prefs.loadPrefs()
@@ -44,7 +44,7 @@ const setupWindow = async (webview: WindowManager) => {
   } catch (e) {
 
   } finally {
-    webview.show()
+    await webview.show()
   }
 
 }
@@ -54,7 +54,7 @@ const setLang = (selectedLang: string) => {
 }
 
 onMounted(async () => {
-  setupWindow(webview)
+  await setupWindow(webview)
 })
 
 </script>

@@ -22,6 +22,8 @@ Vue.use(VueZoomer)
 
 Vue.mount('#app')
 
+import './assets/fonts.scss'
+
 import 'primevue/resources/primevue.min.css'
 import 'primeicons/primeicons.css'
 import 'primevue/resources/themes/md-dark-indigo/theme.css'
@@ -30,4 +32,3 @@ import 'primeflex/primeflex.css'
 import 'swiper/css'
 import 'swiper/css/keyboard'
 import 'swiper/css/lazy'
-import './assets/fonts.scss'
