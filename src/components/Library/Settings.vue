@@ -4,6 +4,7 @@ import Dialog from 'primevue/dialog'
 import SelectButton from 'primevue/selectbutton'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
+import InputSwitch from 'primevue/inputswitch'
 import { open } from '@tauri-apps/api/dialog'
 
 
@@ -20,6 +21,7 @@ const prefs = usePrefsStore()
 const libraryCards = useLibraryCardsStore()
 
 const selectedLanguage = ref<String>('en')
+const discordRichPresence = ref<Boolean>(false)
 
 const languages = [
     {name: 'English', code: 'en'},
@@ -40,11 +42,11 @@ const handleDirectorySelect = async () => {
 
 onMounted(() => {
     selectedLanguage.value = prefs.value.lang
+    discordRichPresence.value = prefs.value.discord_rich_presence_enabled
 })
 
-watch(selectedLanguage, (value: string) => {
-    prefs.setLang(value)
-})
+watch(selectedLanguage, (value: string) => prefs.setLang(value))
+watch(discordRichPresence, (value: boolean) => prefs.setDiscordRichPresence(value))
 
 const { t } = useI18n()
 
@@ -64,6 +66,12 @@ const { t } = useI18n()
             <InputText :value="prefs.value.manga_directory" class="flex-grow-1 fake-disabled" disabled="true"></InputText>
             <Button @click="handleDirectorySelect">{{ t('select') }}</Button>
         </div>
+    </div>
+    <div class="setting-entry">
+        <p class="mb-2">Discord Rich Presence</p>
+        <!-- <Button @click="invoke('discord_connect')">Connect</Button>
+        <Button @click="invoke('discord_close')">Disconnect</Button> -->
+        <InputSwitch v-model="discordRichPresence" />
     </div>
 </Dialog>
 

@@ -5,18 +5,26 @@
 
 use crate::prefs::Prefs;
 use crate::prefs;
+// use crate::discord::discord_ipc_start_interval;
 
-use super::manga;
-use super::connectors::mangadex::MangaDex;
+use crate::manga;
+use crate::connectors::mangadex::MangaDex;
 use std::env;
+use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex;
+use tauri::Manager;
+use discord_rich_presence::activity::Assets;
+use discord_rich_presence::activity::Timestamps;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
-use tauri::Manager;
 use tauri::State;
+// use tokio::time::{interval, Duration};
 use uuid::{Uuid};
+use discord_rich_presence::{activity::Activity, DiscordIpc, DiscordIpcClientMutex};
+
+// use tokio::time::{Duration, interval};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct DownloadingError {
@@ -24,10 +32,6 @@ struct DownloadingError {
   title: String,
   message: String,
 }
-
-// Prefs
-
-struct PrefsStore(Arc<Mutex<Prefs>>);
 
 // Commands
 
@@ -133,6 +137,8 @@ fn change_reader_url(url: String, app_handle: tauri::AppHandle) {
   let _ = window.eval(js.as_str());
 }
 
+// Pefs
+
 #[tauri::command(async)]
 fn read_prefs(prefs: State<'_, PrefsStore>) -> Prefs {
   prefs.0.lock().unwrap().clone()
@@ -144,6 +150,29 @@ fn set_lang(lang: String, prefs: State<'_, PrefsStore>, window: tauri::Window) {
   prefs.lang = lang;
   window.emit_all("update_prefs", prefs.clone()).unwrap();
 }
+
+#[tauri::command(async)]
+fn set_discord_rich_presence_enabled(value: bool, prefs: State<'_, PrefsStore>, client: State<'_, DiscordIpcClientMutex>, window: tauri::Window) {
+  
+  let mut prefs = prefs.0.lock().unwrap();
+  prefs.discord_rich_presence_enabled = value;
+
+  window.emit_all("update_prefs", prefs.clone()).unwrap();
+
+  if value {
+    client.enable()
+  } else {
+    client.disable()
+  }
+}
+
+
+// #[tauri::command(async)]
+// fn set_discord_rich_presence_enabled(value: bool, prefs: State<'_, PrefsStore>, window: tauri::Window) {
+//   let mut prefs = prefs.0.lock().unwrap();
+//   prefs.lang = lang;
+//   window.emit_all("update_prefs", prefs.clone()).unwrap();
+// }
 
 #[tauri::command(async)]
 fn set_window_prefs(label: String, window: prefs::Window, prefs: State<'_, PrefsStore>, webview: tauri::Window) {
@@ -162,10 +191,151 @@ fn save_prefs(prefs: State<'_, PrefsStore>) {
   }
 }
 
+// Discord RP 
+
+// #[tauri::command(async)]
+// fn discord_rich_presence_enable(client: State<'_, DiscordIpcClientMutex>) {
+//   let mut prefs = prefs.0.lock().unwrap();
+
+//   prefs.discord_rich_presence_enabled = true;
+
+//   window.emit_all("update_prefs", prefs.clone()).unwrap();
+
+//   client.enable();
+// }
+
+// #[tauri::command(async)]
+// fn discord_rich_presence_disable(client: State<'_, DiscordIpcClientMutex>) {
+//   client.disable()
+// }
+
+#[tauri::command(async)]
+fn discord_set_activity(
+  details: &str,
+  state: &str,
+  timestamp: i64,
+  image: &str,
+  client: State<'_, DiscordIpcClientMutex>
+) -> Result<(), ()> {
+
+  let mut client = client.0.lock().unwrap();
+  
+  let res = client.set_activity_safe(Activity::new()
+    .state(state)
+    .details(details)
+    .timestamps(Timestamps::new().start(timestamp))
+    .assets(Assets::new().large_image(image))
+  );
+
+  println!("{:?}", res);
+
+  Ok(())
+
+}
+
+#[tauri::command(async)]
+fn discord_clear_activity(client: State<'_, DiscordIpcClientMutex>) -> Result<(), ()> {
+  let mut client = client.0.lock().unwrap();
+
+  client.clear_activity_safe().ok();
+
+  Ok(())
+
+}
+
+// #[tauri::command(async)]
+// async fn discord_start_interval(client: State<'_, DiscordRP>, prefs: State<'_, PrefsStore>) -> Result<(), ()> {
+
+//   let mut interval = interval(Duration::from_secs(1));
+
+//   loop {
+
+//     interval.tick().await;
+
+//     let prefs = prefs.0.lock().unwrap();
+//     let mut client = client.0.lock().unwrap();
+
+//     if !prefs.discord_rich_presence_enabled {
+//       if client.connected && client.close().is_ok() { println!("Closed Discord IPC client...") }
+//       continue;
+//     }
+
+//     if client.connected { continue };
+
+//     if client.connect().is_ok() { println!("Connected to Discord IPC client!") }
+
+//   }
+
+// }
+
+// async fn discord_start_interval(client: State<'_, DiscordRP>) {
+
+//   let mut interval = interval(Duration::from_secs(1));
+
+//   loop {
+
+//     interval.tick().await;
+
+//     println!("Tick");
+
+//     let mut client = client.0.lock().unwrap();
+
+//     if client.socket.is_some() { continue };
+
+//     match client.connect() {
+//       Ok(_) => println!("Opened Discord IPC client"),
+//       Err(_) => println!("Failed to open Discord IPC client"),
+//     }
+
+//     match client.set_activity(Activity::new()
+//       .state("foo")
+//       .details("bar") 
+//     ) {
+//       Ok(_) => println!("Set activity"),
+//       Err(_) => println!("Failed to set activity"),
+//     }
+
+//   }
+
+// }
+
+// Stores
+
+pub struct PrefsStore(Arc<Mutex<Prefs>>);
+
+impl PrefsStore {
+  pub fn new() -> PrefsStore {
+    PrefsStore(
+      Arc::new(
+        Mutex::new(
+          Prefs::load().unwrap()
+        )
+      )
+    )
+  }
+}
+
+// #[derive(Debug)]
+// pub struct DiscordRP(Arc<Mutex<DiscordIpcClient>>);
+
+// impl DiscordRP {
+//   pub fn new(client_id: &str) -> DiscordRP {
+//     DiscordRP(
+//       Arc::new(
+//         Mutex::new(
+//           DiscordIpcClient::new(client_id)
+//           .unwrap()
+//         )
+//       )
+//     )
+//   }
+// }
+
+// Run
+
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_persisted_scope::init())
-    .manage(PrefsStore(Arc::new(Mutex::new(Prefs::load().unwrap()))))
     .invoke_handler(tauri::generate_handler![
       message,
       search_title,
@@ -184,7 +354,30 @@ pub fn run() {
       save_prefs,
       set_lang,
       set_window_prefs,
+      set_discord_rich_presence_enabled,
+      discord_set_activity,
+      discord_clear_activity
     ])
+    .setup(|app| {
+
+      let manga_dir = prefs::manga_dir();
+      create_dir_all(&manga_dir).unwrap();
+
+      app.manage(PrefsStore::new());
+
+      let prefs = app.state::<PrefsStore>();
+      let prefs = prefs.0.lock().unwrap();
+
+      app.manage(DiscordIpcClientMutex::new(&*prefs.discord_app_id));
+
+      if prefs.discord_rich_presence_enabled {
+        let client = app.state::<DiscordIpcClientMutex>();
+        client.enable();
+      } 
+
+      Ok(())
+
+    })
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

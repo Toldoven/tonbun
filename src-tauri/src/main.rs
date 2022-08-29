@@ -4,8 +4,9 @@ mod tauri;
 pub mod manga;
 mod prefs;
 pub mod connectors;
+pub mod discord;
 
-fn main() {
-  prefs::run();
+#[tokio::main]
+async fn main() {
   tauri::run();
 }

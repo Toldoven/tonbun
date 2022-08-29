@@ -34,11 +34,11 @@ const cover = convertFileSrc(props.localCover)
 
 const loading = ref(false)
 
-const cWebview = appWindow
+// const cWebview = appWindow
 
-onMounted(() => {
-  cWebview.listen('change_url', (event: any) => console.log(event.payload))
-})
+// onMounted(() => {
+//   cWebview.listen('change_url', (event: any) => console.log(event.payload))
+// })
 
 const handleRead = async () => {
   try {

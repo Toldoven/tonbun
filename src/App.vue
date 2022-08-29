@@ -4,18 +4,13 @@ import { useI18n } from 'vue-i18n';
 import Toast from 'primevue/toast'
 import { usePrefsStore } from './stores/prefs';
 import { onBeforeMount, onMounted, watch } from 'vue';
+import { invoke } from '@tauri-apps/api';
 
 const { t, locale } = useI18n();
 
 const prefs = usePrefsStore()
 
-// onBeforeMount(async () => {
-//   await prefs.loadPrefs()
-// })
-
-watch(prefs, () => {
-  if (prefs.value.lang) locale.value = prefs.value.lang
-})
+watch(prefs, () => { if (prefs.value.lang) locale.value = prefs.value.lang })
 
 </script>
 

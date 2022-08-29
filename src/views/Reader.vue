@@ -8,6 +8,7 @@ import Reader from '../components/Reader/Reader.vue'
 import { addFullscreenEventListener, loadWindowPrefs, saveWindowPrefs } from '../lib/window'
 import { usePrefsStore } from '../stores/prefs'
 import { useReaderStore } from '../stores/reader'
+import { event } from '@tauri-apps/api'
 
 const route = useRoute()
 const reader = useReaderStore()
@@ -22,6 +23,11 @@ onMounted(async () => {
 
         addFullscreenEventListener(window, webview)
 
+        event.listen('discord_rich_presence_enabled', () => {
+            console.log('Hello')
+            reader.updateDiscordRP()
+        })
+
         webview.once('tauri://close-requested', async () => {
             await Promise.all([
                 invoke('set_manga_chapter_and_slide_by_title', {
@@ -29,6 +35,7 @@ onMounted(async () => {
                     chapter: route.params.chapter,
                     slide: parseInt(route.params.slide as string)
                 }),
+                invoke('discord_clear_activity'),
                 saveWindowPrefs(webview)
             ])
             webview.hide()

@@ -55,6 +55,8 @@ pub struct Reader {
 pub struct Prefs {
     pub lang: String,
     pub manga_directory: PathBuf,
+    pub discord_app_id: String,
+    pub discord_rich_presence_enabled: bool,
     pub windows: Windows,
     pub reader: Reader,
 }
@@ -78,9 +80,11 @@ impl Prefs {
         Prefs {
             lang: "".to_string(),
             manga_directory: default_manga_dir(),
+            discord_app_id: "1012114766141075456".to_string(),
+            discord_rich_presence_enabled: false,
             windows: Windows {
                 reader: Window::new(false, 600, 900),
-                library: Window::new(false, 600, 900),
+                library: Window::new(false, 800, 600),
             },
             reader: Reader {
                 direction: Direction::Vertical,
@@ -144,7 +148,7 @@ pub fn update_manga_dir(dir: PathBuf) {
     prefs.save().unwrap();
 }
 
-pub fn run() {
-    let manga_dir = manga_dir();
-    create_dir_all(&manga_dir).unwrap();
-}
+// pub fn run() {
+//     let manga_dir = manga_dir();
+//     create_dir_all(&manga_dir).unwrap();
+// }

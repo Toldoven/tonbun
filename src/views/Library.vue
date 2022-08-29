@@ -2,7 +2,7 @@
 
 import Library from '../components/Library/Library.vue'
 
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { addFullscreenEventListener, loadWindowPrefs, saveWindowPrefs } from '../lib/window'
 import { WindowManager, appWindow, WebviewWindow } from '@tauri-apps/api/window'
 import Language from '../components/Language.vue'
@@ -55,7 +55,14 @@ const setLang = (selectedLang: string) => {
 
 onMounted(async () => {
   await setupWindow(webview)
+
+  // if prefs.
+  // invoke('discord_start_interval')
 })
+
+// watch(prefs, () => {
+//   if (prefs.value.discord_rich_presence_enabled === true) invoke('discord_start_interval')
+// })
 
 </script>
 

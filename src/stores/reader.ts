@@ -13,6 +13,8 @@ export const useReaderStore = defineStore('reader', () => {
 
     const route = useRoute()
 
+    const timestamp = ref(Date.now())
+
     // Chapter List
 
     const chapterList = ref<string[]>([])
@@ -74,14 +76,25 @@ export const useReaderStore = defineStore('reader', () => {
         })
 
         updateTitle()
+        updateDiscordRP()
 
         loadingChapter.value = false
+    }
+
+    const updateDiscordRP = () => {
+        console.log('?????')
+        invoke('discord_set_activity', {
+            details: "Reading manga",
+            state: `${route.params.title} - ${route.params.chapter}`,
+            timestamp: timestamp.value,
+            image: "logo",
+        })
     }
 
     const currentChapter = computed(() => route.params.chapter)
     
     watch(currentChapter, async (value, oldValue) => {
-        if (value === oldValue) return 
+        if (value === oldValue) return
         updateChapterData()
     }, { immediate: true })
 
@@ -97,5 +110,5 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Return
 
-    return { chapterList, loadingChapter, getChapterList, updateChapterData, resetChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter }
+    return { chapterList, loadingChapter, getChapterList, updateChapterData, resetChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter, updateDiscordRP }
 })
