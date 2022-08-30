@@ -1,11 +1,11 @@
 import { invoke } from "@tauri-apps/api"
-import { appWindow, WindowManager } from "@tauri-apps/api/window"
+import { getCurrent, WindowManager } from "@tauri-apps/api/window"
 import { defineStore } from "pinia"
 import { computed, ref, watch } from "vue"
 import { useRoute } from "vue-router"
 import router from "../router"
 
-const webview: WindowManager = appWindow
+const webview: WindowManager = getCurrent()
 
 export const useReaderStore = defineStore('reader', () => {
 
@@ -82,7 +82,6 @@ export const useReaderStore = defineStore('reader', () => {
     }
 
     const updateDiscordRP = () => {
-        console.log('?????')
         invoke('discord_set_activity', {
             details: "Reading manga",
             state: `${route.params.title} - ${route.params.chapter}`,

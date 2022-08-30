@@ -5,6 +5,8 @@ use std::error::Error;
 use serde::{Serialize, Deserialize};
 use tauri::generate_context;
 
+use crate::manga::Format;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Window {
     pub fullscreen: bool,
@@ -49,6 +51,7 @@ pub struct Reader {
     pub reverse: bool,
     pub animation: bool,
     pub animation_speed: u32,
+    pub default_format: Format,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -91,6 +94,7 @@ impl Prefs {
                 reverse: false,
                 animation: true,
                 animation_speed: 300,
+                default_format: Format::Slides,
             },
         }
     }

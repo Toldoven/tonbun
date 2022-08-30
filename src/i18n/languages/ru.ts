@@ -1,17 +1,24 @@
 const ru = {
     search: "Поиск",
-    settings: "Настройки",
-    folder: "Папка с мангой",
-    select: "Выбрать",
-    language: "Язык",
     read: "Читать",
     delete: "Удалить",
     download: "Скачать",
+    settings: {
+        settings: "Настройки",
+        folder: "Папка с мангой",
+        language: "Язык",
+        select: "Выбрать",
+        discordRichPresence: "Discord Rich Presence",
+    },
+    edit: {
+        credits: "Скачано с {connector}",
+    },
     reader: {
-        type: "Тип читалки",
+        type: "Формат читалки",
         types: {
-            slides: "Слайды",
-            long_strip: "Длинная полоса",
+            Default: "Стандартный",
+            Slides: "Слайды",
+            Longstrip: "Длинная полоса",
         },
     },
     error: {

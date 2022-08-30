@@ -7,7 +7,7 @@ use std::error::Error;
 use std::fs::{create_dir_all};
 use std::path::{PathBuf, Path};
 use serde::{Serialize, Deserialize};
-use crate::manga::{ MangaMeta, create_custom_meta };
+use crate::manga::{ MangaMeta, create_custom_meta, Format };
 use crate::prefs::manga_dir;
 // use uuid::{uuid, Uuid};
 
@@ -187,10 +187,24 @@ impl MangaDex {
         Ok(())
     }
 
-    fn create_meta(manga_uuid: &str, manga_path: &PathBuf) -> Result<(), Box<dyn Error>> {
-        let uuid = Uuid::parse_str(manga_uuid)?;
+    fn create_meta(manga: &Value, manga_path: &PathBuf) -> Result<(), Box<dyn Error>> {
+
+        let uuid = manga["data"]["id"].as_str().ok_or("Err")?;
+        let uuid = Uuid::parse_str(uuid)?;
+
+        let credit = Url::parse("https://mangadex.org/title/")?;
+        let credit = credit.join(uuid.to_string().as_str())?;
+
+        let tag= manga["data"]["attributes"]["tags"].as_array().ok_or("Err")?
+            .iter()
+            .map(|tag| { tag["id"].as_str().unwrap().to_string() })
+            .find(|tag| tag == "3e2b8dae-350e-4ab8-a8ce-016e844b9f0d" );
+        
+        let format = if tag.is_some() { Format::Longstrip } else { Format::Default };
+
         create_custom_meta(&manga_path, MangaMeta::new(
-            uuid, "MangaDex", -1, "0", 0, vec![]))?;
+            uuid, "MangaDex", -1, "0", 0, vec![], format, Some(credit)
+        ))?;
 
         Ok(())
     }
@@ -253,7 +267,8 @@ impl MangaDex {
 
         let manga = MangaDex::get_manga(&manga_uuid)?;
         MangaDex::download_cover(&manga, &path)?;
-        MangaDex::create_meta(manga_uuid, &path)?;
+
+        MangaDex::create_meta(&manga, &path)?;
         
         let payload: StartDownloadingPayload = StartDownloadingPayload::new(manga_uuid.to_string(), download_manga.chapters.len());
         window.emit("start_downloading", payload)?;

@@ -1,20 +1,22 @@
 <script setup lang="ts">
 
 import { invoke } from '@tauri-apps/api'
-import { appWindow } from '@tauri-apps/api/window'
+import { getCurrent } from '@tauri-apps/api/window'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Reader from '../components/Reader/Reader.vue'
 import { addFullscreenEventListener, loadWindowPrefs, saveWindowPrefs } from '../lib/window'
 import { usePrefsStore } from '../stores/prefs'
 import { useReaderStore } from '../stores/reader'
+import { useMetaStore } from '../stores/meta'
 import { event } from '@tauri-apps/api'
 
 const route = useRoute()
 const reader = useReaderStore()
 const prefs = usePrefsStore()
+const meta = useMetaStore()
 
-const webview = appWindow
+const webview = getCurrent()
 
 onMounted(async () => {
     try {
@@ -42,12 +44,14 @@ onMounted(async () => {
         })
 
         await Promise.all([
+            meta.loadMeta(),
             reader.getChapterList(),
             prefs.loadPrefs().then(() => loadWindowPrefs(webview, prefs.value)),
         ])
 
     } catch (e) {
-        invoke('message', { message: e })
+        console.log(e)
+        // invoke('message', { message: e })
     } finally {
         webview.show()
         webview.setFocus()

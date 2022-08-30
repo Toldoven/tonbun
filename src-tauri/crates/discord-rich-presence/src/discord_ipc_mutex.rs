@@ -1,6 +1,4 @@
-// use std::sync::mpsc::{self, Sender, Receiver, channel};
-use std::sync::{Arc, Mutex};
-use tokio::time::{interval,  Duration};
+use std::{sync::{Arc, Mutex}, thread, time::Duration};
 use crate::{DiscordIpc, DiscordIpcClient};
 
 #[derive(Debug)]
@@ -46,13 +44,9 @@ impl DiscordIpcClientMutex {
 
     fn start_loop(&self) {
 
-        let mut interval = interval(Duration::from_secs(1));
-
         let clone = Arc::clone(&self.0);
 
-        tokio::spawn(async move { loop {
-
-            interval.tick().await;
+        thread::spawn(move || { loop {
 
             let mut lock = clone.lock().unwrap();
 
@@ -63,11 +57,12 @@ impl DiscordIpcClientMutex {
 
             if lock.connected { continue };
 
-            // println!("Trying to connect..");
-
             if lock.connect().is_ok() { println!("Connected to Discord IPC client!") }
 
+            thread::sleep(Duration::from_secs(1));
+
         }});
+
     }
 
 }

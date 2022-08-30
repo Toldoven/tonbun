@@ -22,10 +22,16 @@ const libraryCards = useLibraryCardsStore()
 
 const selectedLanguage = ref<String>('en')
 const discordRichPresence = ref(false)
+const selectedReaderFormat = ref('Slides')
 
 const languages = [
     {name: 'English', code: 'en'},
     {name: 'Русский', code: 'ru'},
+]
+
+const readerFormats = [
+    'Slides',
+    'Longstrip',
 ]
 
 const handleDirectorySelect = async () => {
@@ -43,10 +49,12 @@ const handleDirectorySelect = async () => {
 onMounted(() => {
     selectedLanguage.value = prefs.value.lang
     discordRichPresence.value = prefs.value.discord_rich_presence_enabled
+    selectedReaderFormat.value = prefs.value.reader.default_format
 })
 
 watch(selectedLanguage, (value: string) => prefs.setLang(value))
 watch(discordRichPresence, (value: boolean) => prefs.setDiscordRichPresence(value))
+watch(selectedReaderFormat, (value) => prefs.setReaderFormat(value))
 
 const { t } = useI18n()
 
@@ -55,20 +63,24 @@ const { t } = useI18n()
 
 <template>
 
-<Dialog :header="t('settings')" v-model:visible="settingsModal.value" :modal="true" :draggable="false" style="width: 512px">
+<Dialog :header="t('settings.settings')" v-model:visible="settingsModal.value" :modal="true" :draggable="false" style="width: 512px">
     <div class="setting-entry">
-        <p class="mb-2">{{ t('language') }}</p>
+        <p class="mb-2">{{ t('settings.language') }}</p>
         <SelectButton v-model="selectedLanguage" :options="languages" option-label="name" option-value="code"/>
     </div>
     <div class="setting-entry">
-        <p class="mb-2">{{ t('folder') }}</p>
+        <p class="mb-2">{{ t('settings.folder') }}</p>
         <div class="flex gap-2">
             <InputText :value="prefs.value.manga_directory" class="flex-grow-1 fake-disabled" disabled="true"></InputText>
-            <Button @click="handleDirectorySelect">{{ t('select') }}</Button>
+            <Button @click="handleDirectorySelect">{{ t('settings.select') }}</Button>
         </div>
     </div>
     <div class="setting-entry">
-        <p class="mb-2">Discord Rich Presence</p>
+        <p class="mb-2">{{ t('settings.readerFormat') }}</p>
+        <SelectButton v-model="selectedReaderFormat" :options="readerFormats" />
+    </div>
+    <div class="setting-entry">
+        <p class="mb-2">{{ t('settings.discordRichPresence') }}</p>
         <!-- <Button @click="invoke('discord_connect')">Connect</Button>
         <Button @click="invoke('discord_close')">Disconnect</Button> -->
         <InputSwitch v-model="discordRichPresence" />

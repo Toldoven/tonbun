@@ -1,8 +1,4 @@
-#![cfg_attr(
-  all(not(debug_assertions), target_os = "windows"),
-  windows_subsystem = "windows"
-)]
-
+use crate::manga::Format;
 use crate::prefs::Prefs;
 use crate::prefs;
 // use crate::discord::discord_ipc_start_interval;
@@ -79,6 +75,14 @@ fn set_manga_chapter_and_slide_by_title(title: &str, chapter: &str, slide: i32) 
 }
 
 #[tauri::command(async)]
+fn set_manga_format_by_title(title: &str, format: Format, window: tauri::Window) {
+  match manga::set_manga_format_by_title(title, format, window) {
+    Ok(()) => println!("Updated format"),
+    Err(_) => println!("Failed to update format"),
+  }
+}
+
+#[tauri::command(async)]
 fn update_manga_order(order_list: Vec<manga::UuidOrderIndex>) {
   match manga::update_manga_order(order_list) {
     Ok(()) => println!("Updated manga order"),
@@ -150,6 +154,14 @@ fn set_lang(lang: String, prefs: State<'_, PrefsStore>, window: tauri::Window) {
   prefs.lang = lang;
   window.emit_all("update_prefs", prefs.clone()).unwrap();
 }
+
+#[tauri::command(async)]
+fn set_reader_format(format: Format, prefs: State<'_, PrefsStore>, window: tauri::Window) {
+  let mut prefs = prefs.0.lock().unwrap();
+  prefs.reader.default_format = format;
+  window.emit_all("update_prefs", prefs.clone()).unwrap();
+}
+
 
 #[tauri::command(async)]
 fn set_discord_rich_presence_enabled(value: bool, prefs: State<'_, PrefsStore>, client: State<'_, DiscordIpcClientMutex>, window: tauri::Window) {
@@ -242,6 +254,13 @@ fn discord_clear_activity(client: State<'_, DiscordIpcClientMutex>) -> Result<()
   Ok(())
 
 }
+
+// #[tauri::comand(async)]
+// fn set_format_by_title() {
+
+
+  
+// }
 
 // #[tauri::command(async)]
 // async fn discord_start_interval(client: State<'_, DiscordRP>, prefs: State<'_, PrefsStore>) -> Result<(), ()> {
@@ -353,7 +372,9 @@ pub fn run() {
       read_prefs,
       save_prefs,
       set_lang,
+      set_reader_format,
       set_window_prefs,
+      set_manga_format_by_title,
       set_discord_rich_presence_enabled,
       discord_set_activity,
       discord_clear_activity

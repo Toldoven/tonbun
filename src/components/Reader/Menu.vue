@@ -1,30 +1,22 @@
 <script setup lang="ts">
 
 import SelectButton from 'primevue/selectbutton'
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useMetaStore } from '../../stores/meta';
 import { useReaderSettingsStore } from '../../stores/readerSettings';
 
-// const selectedDirecton = ref('horizontal')
-
-// const directions = [
-//     'horizontal',
-//     'vertical'
-// ]
-
-// const selectedInvertDirections = ref(false)
-
-// const invertDirectons = [
-//     'false',
-//     'true'
-// ]
-
-// const types = [
-//     'slides',
-//     'long_strip'
-// ]
-
 const settings = useReaderSettingsStore()
+
+const meta = useMetaStore()
+
+watch(meta, () => {
+    settings.format = meta.value.format
+}, { immediate: true })
+
+const updateFormat = (e) => {
+    settings.updateFormat(e.value)
+}
 
 const { t } = useI18n()
 
@@ -38,8 +30,9 @@ const { t } = useI18n()
     <div class="menu-entry">
         <p class="mb-2">{{ t('reader.type') }}</p>
         <SelectButton
-            v-model="settings.type"
-            :options="settings.types"
+            v-model="settings.format"
+            :options="settings.formats"
+            @change="updateFormat"
             :optionLabel="(e) => t(`reader.types.${e}`)"
         />
     </div>

@@ -2,7 +2,7 @@
 
 import Skeleton from 'primevue/skeleton'
 import Button from 'primevue/button'
-import { WebviewWindow, appWindow } from '@tauri-apps/api/window'
+import { WebviewWindow, appWindow, getCurrent } from '@tauri-apps/api/window'
 
 import { onMounted, ref } from 'vue'
 
@@ -53,17 +53,17 @@ const handleRead = async () => {
 
     if (webview) {
       invoke('change_reader_url', { url: url })
-      webview.hide()
+      webview.show()
     } else {
       webview = new WebviewWindow('reader', { url } )
       webview.once('tauri://created', async () => {
-        webview.hide()
+        webview.show()
         webview.setTitle(props.title)
       })
     }
 
   } catch (e) {
-    invoke('message', { message: e })
+    // invoke('message', { message: e })
   }
 }
 

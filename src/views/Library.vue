@@ -4,14 +4,14 @@ import Library from '../components/Library/Library.vue'
 
 import { onMounted, watch } from 'vue'
 import { addFullscreenEventListener, loadWindowPrefs, saveWindowPrefs } from '../lib/window'
-import { WindowManager, appWindow, WebviewWindow } from '@tauri-apps/api/window'
+import { WindowManager, appWindow, WebviewWindow, getCurrent } from '@tauri-apps/api/window'
 import Language from '../components/Language.vue'
 
 import { useLibraryCardsStore } from '../stores/libraryCards'
 import { usePrefsStore } from '../stores/prefs'
 import { invoke } from '@tauri-apps/api'
 
-const webview: WindowManager = appWindow
+const webview: WindowManager = getCurrent()
 const libraryCards = useLibraryCardsStore()
 
 const closeReader = async () => {

@@ -81,7 +81,7 @@
         "height": 900,
         "fullscreen": false,
         "resizable": true,
-        "visible": false
+        "visible": true
       }
     ]
   }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { appWindow } from '@tauri-apps/api/window';
+import { appWindow, getCurrent } from '@tauri-apps/api/window';
 import { onMounted, ref, watch} from 'vue';
 import { useReaderStore } from '../../stores/reader'
 import Chapter from './Chapter.vue'
@@ -15,7 +15,7 @@ const reader = useReaderStore()
 const lastMove = ref(Date.now())
 const visible = ref(false)
 
-const webview = appWindow
+const webview = getCurrent()
 const menu = ref(null)
 
 const dropdown = ref(null)

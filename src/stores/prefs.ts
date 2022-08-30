@@ -18,9 +18,6 @@ export const usePrefsStore = defineStore('prefs', () => {
     const setLang = (lang: string) => invoke('set_lang', { lang })
 
     const setDiscordRichPresence = async (value: boolean) => {
-        console.log(value)
-
-        // value ? invoke('discord_rich_presence_enable') : invoke('discord_rich_presence_disable')
 
         await invoke('set_discord_rich_presence_enabled', { value })
 
@@ -28,9 +25,9 @@ export const usePrefsStore = defineStore('prefs', () => {
             readerWindow.emit('discord_rich_presence_enabled')
             console.log('Emitted')
         }
-
-        console.log('Pepega')
     }
+
+    const setReaderFormat = (format: String) => invoke('set_reader_format', { format })
 
     // watch(value, () => {
     //     if (value.value === true) invoke('discord_start_interval')
@@ -38,5 +35,5 @@ export const usePrefsStore = defineStore('prefs', () => {
 
     // loadPrefs()
 
-    return { value, setLang, loadPrefs, setDiscordRichPresence }
+    return { value, setLang, loadPrefs, setDiscordRichPresence, setReaderFormat }
 })
