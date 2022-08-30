@@ -26,6 +26,8 @@ The app will remember the chapter and page when you stop reading
 - Add manga from a local source. If the manga your looking for isn't on MangaDex, you can use [HakuNeko](https://hakuneko.download/) to download it instead. 
 - Fullscreen and windowed modes (F11), preserved window size. 
 - Support for English and Russian languages for mangas you download.
+- Discord Rich Presence.
+- Folder selection.
 
 ## Planned features:
 
