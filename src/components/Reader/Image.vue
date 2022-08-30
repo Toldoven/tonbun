@@ -16,7 +16,7 @@ const image = convertFileSrc(props.localImage)
 
 <template>
 
-<img v-show="image" :src="image"/>
+<img v-show="image" :src="image" class="swiper-lazy"/>
 
 </template>
 

@@ -26,19 +26,24 @@ The app will remember the chapter and page when you stop reading
 - Add manga from a local source. If the manga your looking for isn't on MangaDex, you can use [HakuNeko](https://hakuneko.download/) to download it instead. 
 - Fullscreen and windowed modes (F11), preserved window size. 
 - Support for English and Russian languages for mangas you download.
+- Discord Rich Presence.
+- Folder selection.
 
 ## Planned features:
 
-- Integration with Anilist and MyAnimeList to track progress.
-- Discord Rich Presence.
-- Support for long strip format.
-- Support for multiple connectors, like in [HakuNeko](https://hakuneko.download/). 
+### v1.0.3
 - Credits for scanlation group from MangaDex.
-- More languages. 
-- More reader settings. The reader is janky right now. 
-- Change the manga folder. Default is `Documents/Mangas`
+- A proper support for long strip format.
+- Integration with Anilist and MyAnimeList to track progress.|
+### v???
+- More reader settings. The reader is janky right now.
+### v???
+- Improved downloader.
 - Download only a part of the chapters, not all.
-- Check for new chapters and download them when they are available. 
+- Check for new chapters and download them when they are available.
+### Ideas
+- More languages.
 - Folders in the library for a more convenient organization.
-- Read manga without downloading it. 
-- Mobile app with synchronized progress. 
+- Read manga without downloading it.
+- Mobile app with synchronized progress.
+- Support for multiple connectors, like in [HakuNeko](https://hakuneko.download/).

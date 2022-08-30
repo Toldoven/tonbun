@@ -2,12 +2,11 @@
 
 import Skeleton from 'primevue/skeleton'
 import Button from 'primevue/button'
-import { WebviewWindow, appWindow } from '@tauri-apps/api/window'
+import { WebviewWindow, appWindow, getCurrent } from '@tauri-apps/api/window'
 
 import { onMounted, ref } from 'vue'
 
 import { invoke, convertFileSrc } from '@tauri-apps/api/tauri'
-import { loadWindowPrefs } from '../../../lib/window'
 import { useLibraryCardsStore } from '../../../stores/libraryCards'
 import { useEditModalStore } from '../../../stores/editModal'
 import { useI18n } from 'vue-i18n'
@@ -35,11 +34,11 @@ const cover = convertFileSrc(props.localCover)
 
 const loading = ref(false)
 
-const cWebview = appWindow
+// const cWebview = appWindow
 
-onMounted(() => {
-  cWebview.listen('change_url', (event: any) => console.log(event.payload))
-})
+// onMounted(() => {
+//   cWebview.listen('change_url', (event: any) => console.log(event.payload))
+// })
 
 const handleRead = async () => {
   try {
@@ -54,19 +53,17 @@ const handleRead = async () => {
 
     if (webview) {
       invoke('change_reader_url', { url: url })
-      webview.hide()
+      webview.show()
     } else {
       webview = new WebviewWindow('reader', { url } )
       webview.once('tauri://created', async () => {
-        webview.hide()
+        webview.show()
         webview.setTitle(props.title)
       })
     }
 
-    loadWindowPrefs(webview)
-
   } catch (e) {
-    invoke('message', { message: e })
+    // invoke('message', { message: e })
   }
 }
 

@@ -33,6 +33,12 @@ const { t } = useI18n()
 <template>
 
 <Dialog :header="editModal.manga.title" v-model:visible="editModal.value" :modal="true" :draggable="false" style="width: 512px">
+
+
+    <div v-if="editModal.meta?.credits" class="mb-4">
+        <a :href="editModal.meta.credits" target="_blank">{{t('edit.credits', { connector: editModal.meta.connector })}}</a>
+    </div>
+
 	<Button
         @click="handleDelete"
         :loading="deleteLoading"
@@ -41,6 +47,16 @@ const { t } = useI18n()
     >
         {{ t('delete') }}
     </Button>
+
 </Dialog>
 
 </template>
+
+
+<style scoped lang="scss">
+
+button {
+    margin: 0;
+}
+
+</style>

@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "Tonbun",
-    "version": "1.0.1"
+    "version": "1.0.2"
   },
   "tauri": {
     "allowlist": {
@@ -81,7 +81,7 @@
         "height": 900,
         "fullscreen": false,
         "resizable": true,
-        "visible": false
+        "visible": true
       }
     ]
   }

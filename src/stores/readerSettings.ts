@@ -1,15 +1,27 @@
-import { defineStore } from "pinia";
-import { ref } from "vue";
+import { invoke } from "@tauri-apps/api"
+import { defineStore } from "pinia"
+import { ref, watch } from "vue"
+import { useRoute } from "vue-router"
 
 export const useReaderSettingsStore = defineStore('readerSettings', () => {
 
-    const type = ref('slides')
+    const format = ref(undefined)
+    const route = useRoute()
 
-    const types = [
-        'slides',
-        'long_strip'
+    const formats = [
+        'Default',
+        'Slides',
+        'Longstrip',
     ]
 
-    return { type, types }
+    const updateFormat = async (value) => {
+        await invoke('set_manga_format_by_title', { title: route.params.title, format: value });
+    }
+
+    // watch(format, async (value) => {
+    //     await invoke('set_manga_format_by_title', { title: route.params.title, format: value });
+    // })
+
+    return { format, formats, updateFormat }
 
 })

@@ -1,17 +1,19 @@
 import { invoke } from "@tauri-apps/api"
-import { appWindow, WindowManager } from "@tauri-apps/api/window"
+import { getCurrent, WindowManager } from "@tauri-apps/api/window"
 import { defineStore } from "pinia"
 import { computed, ref, watch } from "vue"
 import { useRoute } from "vue-router"
 import router from "../router"
 
-const webview: WindowManager = appWindow
+const webview: WindowManager = getCurrent()
 
 export const useReaderStore = defineStore('reader', () => {
 
     const loadingChapter = ref(true)
 
     const route = useRoute()
+
+    const timestamp = ref(Date.now())
 
     // Chapter List
 
@@ -51,10 +53,16 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Chapter Data 
 
-    const chapterData = ref({
+    const chapterDataDefault = {
         path: '',
         images: [],
-    })
+    }
+
+    const chapterData = ref(chapterDataDefault)
+
+    const resetChapterData = () => {
+        chapterData.value = chapterDataDefault
+    }
 
     const updateChapterData = async () => {
 
@@ -68,14 +76,24 @@ export const useReaderStore = defineStore('reader', () => {
         })
 
         updateTitle()
+        updateDiscordRP()
 
         loadingChapter.value = false
+    }
+
+    const updateDiscordRP = () => {
+        invoke('discord_set_activity', {
+            details: "Reading manga",
+            state: `${route.params.title} - ${route.params.chapter}`,
+            timestamp: timestamp.value,
+            image: "logo",
+        })
     }
 
     const currentChapter = computed(() => route.params.chapter)
     
     watch(currentChapter, async (value, oldValue) => {
-        if (value === oldValue) return 
+        if (value === oldValue) return
         updateChapterData()
     }, { immediate: true })
 
@@ -91,5 +109,5 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Return
 
-    return { chapterList, loadingChapter, getChapterList, updateChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter }
+    return { chapterList, loadingChapter, getChapterList, updateChapterData, resetChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter, updateDiscordRP }
 })

@@ -2,6 +2,7 @@ use crate::prefs::manga_dir;
 use crate::prefs::manga_dir_title;
 use std::fs::remove_dir_all;
 use std::fs::{read_to_string, read_dir, write, copy};
+use reqwest::Url;
 use serde::{Serialize, Deserialize};
 use std::path::{PathBuf};
 use std::result::Result;
@@ -82,11 +83,13 @@ pub struct MangaMeta {
     order: i32,
     chapter: String,
     slide: i32,
-    finished_chapters: Vec<i32>,
+    finished_chapters: Vec<String>,
+    format: Format,
+    credits: Option<Url>
 }
 
 impl MangaMeta {
-    pub fn new(uuid: Uuid, connector: &str, order: i32, chapter: &str, slide: i32, finished_chapters: Vec<i32>) -> MangaMeta {
+    pub fn new(uuid: Uuid, connector: &str, order: i32, chapter: &str, slide: i32, finished_chapters: Vec<String>, format: Format, credits: Option<Url>) -> MangaMeta {
         MangaMeta {
             uuid,
             connector: connector.to_string(),
@@ -94,6 +97,8 @@ impl MangaMeta {
             chapter: chapter.to_string(),
             slide, 
             finished_chapters,
+            format,
+            credits,
         }
     }
 
@@ -105,8 +110,17 @@ impl MangaMeta {
             "0",
             0,
             vec![],
+            Format::Default,
+            None
         )
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum Format {
+    Default,
+    Slides,
+    Longstrip,
 }
 
 
@@ -331,6 +345,17 @@ pub fn set_manga_chapter_and_slide_by_title(title: &str, chapter: &str, slide: i
 
     Ok(())
 }
+
+pub fn set_manga_format_by_title(title: &str, format: Format, window: tauri::Window) -> Result<(), Box<dyn Error>> {
+    let mut manga = get_manga_by_path(&manga_dir_title(title));
+    manga.meta.format = format;
+    manga.update_meta()?;
+
+    window.emit("update_meta", manga.meta).ok();
+
+    Ok(())
+}
+
 
 pub fn get_manga_meta_by_title(title: &str) -> MangaMeta {
     let path = manga_dir_title(title);

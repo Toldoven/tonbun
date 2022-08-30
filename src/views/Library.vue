@@ -2,15 +2,16 @@
 
 import Library from '../components/Library/Library.vue'
 
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { addFullscreenEventListener, loadWindowPrefs, saveWindowPrefs } from '../lib/window'
-import { WindowManager, appWindow, WebviewWindow } from '@tauri-apps/api/window'
+import { WindowManager, appWindow, WebviewWindow, getCurrent } from '@tauri-apps/api/window'
 import Language from '../components/Language.vue'
 
 import { useLibraryCardsStore } from '../stores/libraryCards'
 import { usePrefsStore } from '../stores/prefs'
+import { invoke } from '@tauri-apps/api'
 
-const webview: WindowManager = appWindow
+const webview: WindowManager = getCurrent()
 const libraryCards = useLibraryCardsStore()
 
 const closeReader = async () => {
@@ -19,33 +20,49 @@ const closeReader = async () => {
   await reader.close()
 }
 
+const prefs = usePrefsStore()
+
 const setupWindow = async (webview: WindowManager) => {
-  await loadWindowPrefs(webview)
-  webview.show()
+  try {
 
-  addFullscreenEventListener(window, webview)
+    addFullscreenEventListener(window, webview)
 
-  webview.once('tauri://close-requested', async () => {
+    webview.once('tauri://close-requested', async () => {
+      await Promise.all([
+        saveWindowPrefs(webview),
+        libraryCards.saveOrder(),
+        closeReader()
+      ])
+      await invoke('save_prefs')
+      await webview.close()
+    })
 
-    await Promise.all([
-      saveWindowPrefs(webview),
-      libraryCards.saveOrder(),
-      closeReader()
-    ])
+    await prefs.loadPrefs()
+    
+    await loadWindowPrefs(webview, prefs.value)
 
-    webview.close()
-  })
+  } catch (e) {
+
+  } finally {
+    await webview.show()
+  }
+
 }
 
 const setLang = (selectedLang: string) => {
   prefs.setLang(selectedLang)
 }
 
-const prefs = usePrefsStore()
-
 onMounted(async () => {
-  setupWindow(webview)
+  await setupWindow(webview)
+
+  // if prefs.
+  // invoke('discord_start_interval')
 })
+
+// watch(prefs, () => {
+//   if (prefs.value.discord_rich_presence_enabled === true) invoke('discord_start_interval')
+// })
 
 </script>
 

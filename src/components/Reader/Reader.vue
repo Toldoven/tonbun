@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
-import { appWindow } from '@tauri-apps/api/window';
-import { onMounted, ref } from 'vue';
+import { appWindow, getCurrent } from '@tauri-apps/api/window';
+import { onMounted, ref, watch} from 'vue';
 import { useReaderStore } from '../../stores/reader'
 import Chapter from './Chapter.vue'
 
@@ -15,7 +15,7 @@ const reader = useReaderStore()
 const lastMove = ref(Date.now())
 const visible = ref(false)
 
-const webview = appWindow
+const webview = getCurrent()
 const menu = ref(null)
 
 const dropdown = ref(null)
@@ -36,6 +36,7 @@ onMounted(async () => {
         setTimeout(async () => {
             if (lastMove.value != whenRun) return
             if (isDropdownShown.value || isMenuShown.value) return
+
             visible.value = false
             dropdown.value.hide()
         }, 1500)
@@ -46,14 +47,20 @@ onMounted(async () => {
 
 const fullscreen = ref(false)
 
+const removeFocus = () => (document.activeElement as HTMLElement).blur()
+
 const toggleFullscreen = () => {
-  fullscreen.value = !fullscreen.value
-  webview.setFullscreen(fullscreen.value)
+    fullscreen.value = !fullscreen.value
+    webview.setFullscreen(fullscreen.value)
+    removeFocus()
 }
 
 const toggleMenu = (event) => {
-  menu.value.toggle(event)
+    menu.value.toggle(event)
+    removeFocus()
 }
+
+watch(isDropdownShown, () => removeFocus())
 
 </script>
 
@@ -61,9 +68,16 @@ const toggleMenu = (event) => {
 <template>
 
 <div :class="`mouse-move fixed flex gap-2 flex-row-reverse z-3 right-0 m-3 ${!visible ? `hidden` : ''}`">
-  <Button @click="webview.emit('tauri://close-requested')" v-if="fullscreen" icon="pi pi-times" class="p-button-plain p-button-rounded p-button-text"></Button>
-  <Button @click="toggleFullscreen" :icon="`pi ${!fullscreen ? `pi-window-maximize` : `pi-window-minimize`}`" class="p-button-plain p-button-rounded p-button-text"></Button>
-  <Button @click="toggleMenu" icon="pi pi-cog" class="p-button-plain p-button-rounded p-button-text"></Button>
+  <Button @click="webview.emit('tauri://close-requested')" tab-v-if="fullscreen" icon="pi" class="p-button-plain p-button-rounded p-button-text">
+      <span class="material-symbols-outlined">close</span>
+  </Button>
+  <Button @click="toggleFullscreen" icon="pi" class="p-button-plain p-button-rounded p-button-text" :tabindex="-1">
+      <span class="material-symbols-outlined" v-if="!fullscreen">fullscreen</span>
+      <span class="material-symbols-outlined" v-else>fullscreen_exit</span>
+  </Button>
+  <Button @click="toggleMenu" icon="pi pi-cog" class="p-button-plain p-button-rounded p-button-text">
+      <span class="material-symbols-outlined">settings</span>
+  </Button>
 </div>
 
 <OverlayPanel ref="menu" :popup="true" @show="isMenuShown=true" @hide="isMenuShown=false">
