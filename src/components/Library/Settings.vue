@@ -21,7 +21,7 @@ const prefs = usePrefsStore()
 const libraryCards = useLibraryCardsStore()
 
 const selectedLanguage = ref<String>('en')
-const discordRichPresence = ref<Boolean>(false)
+const discordRichPresence = ref(false)
 
 const languages = [
     {name: 'English', code: 'en'},

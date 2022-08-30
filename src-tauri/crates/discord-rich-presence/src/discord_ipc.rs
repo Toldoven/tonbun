@@ -254,6 +254,6 @@ pub trait DiscordIpc {
 
     // fn enable(&self, this: Arc<Mutex<Self>>);
 
-    fn test(&self);
+    // fn test(&self);
 
 }

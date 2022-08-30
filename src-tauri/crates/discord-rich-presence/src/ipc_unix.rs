@@ -116,9 +116,9 @@ impl DiscordIpc for DiscordIpcClient {
         Ok(())
     }
 
-    fn test(&self) {
-        println!("Pepega")
-    }
+    // fn test(&self) {
+    //     println!("Pepega")
+    // }
 
     // fn enable(&self, this: Arc<Mutex<Self>>) {
 
