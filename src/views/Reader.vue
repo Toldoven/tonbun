@@ -16,6 +16,8 @@ const reader = useReaderStore()
 const prefs = usePrefsStore()
 const meta = useMetaStore()
 
+// import router from "../router"
+
 const webview = getCurrent()
 
 onMounted(async () => {
@@ -26,11 +28,10 @@ onMounted(async () => {
         addFullscreenEventListener(window, webview)
 
         event.listen('discord_rich_presence_enabled', () => {
-            console.log('Hello')
             reader.updateDiscordRP()
         })
 
-        webview.once('tauri://close-requested', async () => {
+        event.once('tauri://close-requested', async () => {
             await Promise.all([
                 invoke('set_manga_chapter_and_slide_by_title', {
                     title: route.params.title,
@@ -40,17 +41,34 @@ onMounted(async () => {
                 invoke('discord_clear_activity'),
                 saveWindowPrefs(webview)
             ])
-            webview.hide()
+            webview.close()
+        })
+
+        event.listen('change_reader_url_test', async (e: any) => {
+            await webview.hide()
+
+            await invoke('set_manga_chapter_and_slide_by_title', {
+                title: route.params.title,
+                chapter: route.params.chapter,
+                slide: parseInt(route.params.slide as string)
+            }),
+            await saveWindowPrefs(webview)
+
+            await reader.push(e.payload)
+            await reader.getChapterList()
+
+            await webview.show()
+            await webview.setFocus()
         })
 
         await Promise.all([
             meta.loadMeta(),
             reader.getChapterList(),
-            prefs.loadPrefs().then(() => loadWindowPrefs(webview, prefs.value)),
+            prefs.loadPrefs(),
         ])
 
     } catch (e) {
-        console.log(e)
+        console.error(e)
         // invoke('message', { message: e })
     } finally {
         webview.show()

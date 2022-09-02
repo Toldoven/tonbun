@@ -10,9 +10,11 @@ import { invoke, convertFileSrc } from '@tauri-apps/api/tauri'
 import { useLibraryCardsStore } from '../../../stores/libraryCards'
 import { useEditModalStore } from '../../../stores/editModal'
 import { useI18n } from 'vue-i18n'
+import { usePrefsStore } from '../../../stores/prefs'
 
 const libraryCards = useLibraryCardsStore();
 const editModal = useEditModalStore();
+const prefs = usePrefsStore();
 
 const props = defineProps({
   uuid: {
@@ -52,18 +54,20 @@ const handleRead = async () => {
     let webview = WebviewWindow.getByLabel('reader')
 
     if (webview) {
-      invoke('change_reader_url', { url: url })
-      webview.show()
+      await webview.emit('change_reader_url_test', url)
     } else {
-      webview = new WebviewWindow('reader', { url } )
-      webview.once('tauri://created', async () => {
-        webview.show()
-        webview.setTitle(props.title)
-      })
+      webview = new WebviewWindow('reader', {
+        url,
+        visible: false,
+        title: props.title,
+        fullscreen: prefs.value.windows.reader.fullscreen,
+        width: prefs.value.windows.reader.x,
+        height: prefs.value.windows.reader.y,
+      } )
     }
 
   } catch (e) {
-    // invoke('message', { message: e })
+    console.error(e)
   }
 }
 

@@ -35,10 +35,11 @@ tauri-plugin-persisted-scope = { version = "0.1", features = ["protocol-asset"] 
 #tauri-plugin-window-state = "0.1"
 image = "0.24.3"
 alphanumeric-sort = "1.4.4"
-discord-rich-presence = "0.2.2"
+# discord-rich-presence = "0.2.2"
+declarative-discord-rich-presence = { path = "../../../declarative-discord-rich-presence" }
 
 [patch.crates-io]
-discord-rich-presence = { path = "./crates/discord-rich-presence" }
+discord-rich-presence = { path = "../../../discord-rich-presence" }
 
 # [dependencies.tauri-plugin-fs-watch]
 # git = "https://github.com/tauri-apps/tauri-plugin-fs-watch"

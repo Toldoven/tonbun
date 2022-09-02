@@ -38,7 +38,7 @@ onMounted(async () => {
             if (isDropdownShown.value || isMenuShown.value) return
 
             visible.value = false
-            dropdown.value.hide()
+            dropdown?.value?.hide()
         }, 1500)
     })
 

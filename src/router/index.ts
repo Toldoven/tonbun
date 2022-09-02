@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import Library from '../views/Library.vue'
+import Reader from '../views/Reader.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -8,9 +9,9 @@ const routes: RouteRecordRaw[] = [
     component: Library
   },
   {
-    path: '/read',
+    path: '/read/',
     name: 'Reader',
-    component: () => import('../views/Reader.vue'),
+    component: Reader,
   },
   {
     path: '/read/:title',
@@ -23,11 +24,12 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/read/:title/:chapter/:slide',
     name: 'Reader',
-    component: () => import('../views/Reader.vue'),
+    component: Reader,
   }
 ]
 const router = createRouter({
     history: createWebHistory(),
     routes
 })
+
 export default router

@@ -64,8 +64,8 @@ name = "app"
 version = "0.1.0"
 dependencies = [
  "alphanumeric-sort",
+ "declarative-discord-rich-presence",
  "directories",
- "discord-rich-presence",
  "downloader",
  "image",
  "reqwest",
@@ -562,6 +562,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "declarative-discord-rich-presence"
+version = "0.1.0"
+dependencies = [
+ "discord-rich-presence",
+]
+
+[[package]]
 name = "deflate"
 version = "0.7.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -651,7 +658,6 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "tokio",
  "uuid 0.8.2",
 ]
 

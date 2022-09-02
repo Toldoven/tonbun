@@ -11,14 +11,14 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::Manager;
-use discord_rich_presence::activity::Assets;
-use discord_rich_presence::activity::Timestamps;
+// use discord_rich_presence::activity::Assets;
+// use discord_rich_presence::activity::Timestamps;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 use tauri::State;
 // use tokio::time::{interval, Duration};
 use uuid::{Uuid};
-use discord_rich_presence::{activity::Activity, DiscordIpc, DiscordIpcClientMutex};
+use declarative_discord_rich_presence::{activity::{Activity, Assets, Timestamps}, DeclarativeDiscordIpcClient};
 
 // use tokio::time::{Duration, interval};
 
@@ -116,19 +116,6 @@ fn download_manga(uuid: String, lang: String, title: String, window: tauri::Wind
   });
 }
 
-// #[tauri::command(async)]
-// fn load_prefs() -> prefs::Prefs {
-//   prefs::Prefs::read().unwrap()
-// }
-
-// #[tauri::command(async)]
-// fn save_prefs(prefs: prefs::Prefs) {
-//   match prefs::Prefs::write(prefs) {
-//     Ok(()) => println!("Updated prefs"),
-//     Err(_) => println!("Failed to update prefs"),
-//   }
-// }
-
 #[tauri::command(async)]
 fn update_manga_dir(dir: PathBuf) {
   prefs::update_manga_dir(dir);
@@ -164,7 +151,7 @@ fn set_reader_format(format: Format, prefs: State<'_, PrefsStore>, window: tauri
 
 
 #[tauri::command(async)]
-fn set_discord_rich_presence_enabled(value: bool, prefs: State<'_, PrefsStore>, client: State<'_, DiscordIpcClientMutex>, window: tauri::Window) {
+fn set_discord_rich_presence_enabled(value: bool, prefs: State<'_, PrefsStore>, client: State<'_, DeclarativeDiscordIpcClient>, window: tauri::Window) {
   
   let mut prefs = prefs.0.lock().unwrap();
   prefs.discord_rich_presence_enabled = value;
@@ -177,14 +164,6 @@ fn set_discord_rich_presence_enabled(value: bool, prefs: State<'_, PrefsStore>, 
     client.disable()
   }
 }
-
-
-// #[tauri::command(async)]
-// fn set_discord_rich_presence_enabled(value: bool, prefs: State<'_, PrefsStore>, window: tauri::Window) {
-//   let mut prefs = prefs.0.lock().unwrap();
-//   prefs.lang = lang;
-//   window.emit_all("update_prefs", prefs.clone()).unwrap();
-// }
 
 #[tauri::command(async)]
 fn set_window_prefs(label: String, window: prefs::Window, prefs: State<'_, PrefsStore>, webview: tauri::Window) {
@@ -203,120 +182,36 @@ fn save_prefs(prefs: State<'_, PrefsStore>) {
   }
 }
 
-// Discord RP 
-
-// #[tauri::command(async)]
-// fn discord_rich_presence_enable(client: State<'_, DiscordIpcClientMutex>) {
-//   let mut prefs = prefs.0.lock().unwrap();
-
-//   prefs.discord_rich_presence_enabled = true;
-
-//   window.emit_all("update_prefs", prefs.clone()).unwrap();
-
-//   client.enable();
-// }
-
-// #[tauri::command(async)]
-// fn discord_rich_presence_disable(client: State<'_, DiscordIpcClientMutex>) {
-//   client.disable()
-// }
-
 #[tauri::command(async)]
 fn discord_set_activity(
   details: &str,
   state: &str,
   timestamp: i64,
   image: &str,
-  client: State<'_, DiscordIpcClientMutex>
+  client: State<'_, DeclarativeDiscordIpcClient>
 ) -> Result<(), ()> {
-
-  let mut client = client.0.lock().unwrap();
   
-  let res = client.set_activity_safe(Activity::new()
+  client.set_activity(Activity::new()
     .state(state)
     .details(details)
     .timestamps(Timestamps::new().start(timestamp))
     .assets(Assets::new().large_image(image))
-  );
+  ).ok();
 
-  println!("{:?}", res);
+  // println!("{:?}", res);
 
   Ok(())
 
 }
 
 #[tauri::command(async)]
-fn discord_clear_activity(client: State<'_, DiscordIpcClientMutex>) -> Result<(), ()> {
-  let mut client = client.0.lock().unwrap();
+fn discord_clear_activity(client: State<'_, DeclarativeDiscordIpcClient>) -> Result<(), ()> {
 
-  client.clear_activity_safe().ok();
+  client.clear_activity().ok();
 
   Ok(())
 
 }
-
-// #[tauri::comand(async)]
-// fn set_format_by_title() {
-
-
-  
-// }
-
-// #[tauri::command(async)]
-// async fn discord_start_interval(client: State<'_, DiscordRP>, prefs: State<'_, PrefsStore>) -> Result<(), ()> {
-
-//   let mut interval = interval(Duration::from_secs(1));
-
-//   loop {
-
-//     interval.tick().await;
-
-//     let prefs = prefs.0.lock().unwrap();
-//     let mut client = client.0.lock().unwrap();
-
-//     if !prefs.discord_rich_presence_enabled {
-//       if client.connected && client.close().is_ok() { println!("Closed Discord IPC client...") }
-//       continue;
-//     }
-
-//     if client.connected { continue };
-
-//     if client.connect().is_ok() { println!("Connected to Discord IPC client!") }
-
-//   }
-
-// }
-
-// async fn discord_start_interval(client: State<'_, DiscordRP>) {
-
-//   let mut interval = interval(Duration::from_secs(1));
-
-//   loop {
-
-//     interval.tick().await;
-
-//     println!("Tick");
-
-//     let mut client = client.0.lock().unwrap();
-
-//     if client.socket.is_some() { continue };
-
-//     match client.connect() {
-//       Ok(_) => println!("Opened Discord IPC client"),
-//       Err(_) => println!("Failed to open Discord IPC client"),
-//     }
-
-//     match client.set_activity(Activity::new()
-//       .state("foo")
-//       .details("bar") 
-//     ) {
-//       Ok(_) => println!("Set activity"),
-//       Err(_) => println!("Failed to set activity"),
-//     }
-
-//   }
-
-// }
 
 // Stores
 
@@ -333,22 +228,6 @@ impl PrefsStore {
     )
   }
 }
-
-// #[derive(Debug)]
-// pub struct DiscordRP(Arc<Mutex<DiscordIpcClient>>);
-
-// impl DiscordRP {
-//   pub fn new(client_id: &str) -> DiscordRP {
-//     DiscordRP(
-//       Arc::new(
-//         Mutex::new(
-//           DiscordIpcClient::new(client_id)
-//           .unwrap()
-//         )
-//       )
-//     )
-//   }
-// }
 
 // Run
 
@@ -389,10 +268,10 @@ pub fn run() {
       let prefs = app.state::<PrefsStore>();
       let prefs = prefs.0.lock().unwrap();
 
-      app.manage(DiscordIpcClientMutex::new(&*prefs.discord_app_id));
+      app.manage(DeclarativeDiscordIpcClient::new(&*prefs.discord_app_id));
 
       if prefs.discord_rich_presence_enabled {
-        let client = app.state::<DiscordIpcClientMutex>();
+        let client = app.state::<DeclarativeDiscordIpcClient>();
         client.enable();
       } 
 
