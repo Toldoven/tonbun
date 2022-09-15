@@ -107,7 +107,11 @@ export const useReaderStore = defineStore('reader', () => {
         router.push(`/read/${route.params.title}/${chapter}/0`)
     }
 
+    const push = async (url: string) => {
+        await router.push(url)
+    }
+
     // Return
 
-    return { chapterList, loadingChapter, getChapterList, updateChapterData, resetChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter, updateDiscordRP }
+    return { chapterList, loadingChapter, getChapterList, updateChapterData, resetChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter, updateDiscordRP, push }
 })

@@ -64,8 +64,8 @@ name = "app"
 version = "0.1.0"
 dependencies = [
  "alphanumeric-sort",
+ "declarative-discord-rich-presence",
  "directories",
- "discord-rich-presence",
  "downloader",
  "image",
  "reqwest",
@@ -562,6 +562,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "declarative-discord-rich-presence"
+version = "0.1.0"
+source = "git+https://github.com/KPidS/declarative-discord-rich-presence#bbe5f1193c595f195e8b61c055a552bf65d70eef"
+dependencies = [
+ "discord-rich-presence",
+]
+
+[[package]]
 name = "deflate"
 version = "0.7.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -646,12 +654,12 @@ dependencies = [
 
 [[package]]
 name = "discord-rich-presence"
-version = "0.2.2"
+version = "0.2.3"
+source = "git+https://github.com/KPidS/declarative-discord-rich-presence#bbe5f1193c595f195e8b61c055a552bf65d70eef"
 dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "tokio",
  "uuid 0.8.2",
 ]
 
