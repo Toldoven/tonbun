@@ -75,6 +75,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-persisted-scope",
+ "tauri-plugin-window-state",
  "tokio",
  "toml",
  "uuid 1.1.2",
@@ -3330,6 +3331,17 @@ dependencies = [
  "bincode",
  "serde",
  "serde_json",
+ "tauri",
+ "thiserror",
+]
+
+[[package]]
+name = "tauri-plugin-window-state"
+version = "0.1.0"
+source = "git+https://github.com/KPidS/tauri-plugin-window-state#ff4a9b52725c1424f9e68e0cc76d536cec256dec"
+dependencies = [
+ "bincode",
+ "serde",
  "tauri",
  "thiserror",
 ]

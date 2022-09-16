@@ -19,6 +19,8 @@ export const useLibraryCardsStore = defineStore('libraryCards', () => {
 
     const value = ref<Array<Object>>([])
 
+    const loading = ref<boolean>(false)
+
     const update = async () => {
         value.value = await getMangaCards()
     }
@@ -75,5 +77,5 @@ export const useLibraryCardsStore = defineStore('libraryCards', () => {
 
     update()
 
-    return { value, saveOrder, update, orderList, saveAndUpdate, downloading, startDownloading, deleteMangaByUuid }
+    return { value, loading, saveOrder, update, orderList, saveAndUpdate, downloading, startDownloading, deleteMangaByUuid }
 })

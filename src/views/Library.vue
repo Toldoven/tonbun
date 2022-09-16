@@ -3,21 +3,27 @@
 import Library from '../components/Library/Library.vue'
 
 import { onMounted, watch } from 'vue'
-import { addFullscreenEventListener, loadWindowPrefs, saveWindowPrefs } from '../lib/window'
+import { addFullscreenEventListener } from '../lib/window'
 import { WindowManager, appWindow, WebviewWindow, getCurrent } from '@tauri-apps/api/window'
 import Language from '../components/Language.vue'
 
 import { useLibraryCardsStore } from '../stores/libraryCards'
 import { usePrefsStore } from '../stores/prefs'
 import { invoke } from '@tauri-apps/api'
+import { message } from '@tauri-apps/api/dialog'
+import { event } from '@tauri-apps/api'
 
 const webview: WindowManager = getCurrent()
 const libraryCards = useLibraryCardsStore()
 
 const closeReader = async () => {
-  const reader = WebviewWindow.getByLabel('reader')
-  if (!reader) return
-  await reader.close()
+  try {
+    const reader = WebviewWindow.getByLabel('reader')
+    if (!reader) return
+    await reader.close()
+  } catch (e) {
+    console.error(e)
+  }
 }
 
 const prefs = usePrefsStore()
@@ -28,21 +34,29 @@ const setupWindow = async (webview: WindowManager) => {
     addFullscreenEventListener(window, webview)
 
     webview.once('tauri://close-requested', async () => {
-      await Promise.all([
-        saveWindowPrefs(webview),
-        libraryCards.saveOrder(),
-        closeReader()
-      ])
-      await invoke('save_prefs')
-      await webview.close()
+      console.log('Hellooooo')
+      try {
+        await Promise.all([
+          libraryCards.saveOrder(),
+          invoke('set_manga_chapter_and_slide_from_state'),
+          invoke('save_prefs'),
+        ])
+      } catch (e) {
+        console.error(e)
+        await message(`Error when trying to close the app: ${e}`);
+      } finally {
+        console.log('???????')
+        await closeReader()
+        await webview.close()
+      }
     })
 
     await prefs.loadPrefs()
     
-    await loadWindowPrefs(webview, prefs.value)
+    // await loadWindowPrefs(webview, prefs.value)
 
   } catch (e) {
-
+    console.error(e)
   } finally {
     await webview.show()
   }

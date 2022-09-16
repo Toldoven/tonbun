@@ -11,7 +11,7 @@ export const useMetaStore = defineStore('meta', () => {
     const value = ref(undefined)
 
     const loadMeta = async () => {
-        value.value = await await invoke('get_manga_meta_by_title', { title: route.params.title })
+        value.value = await invoke('get_manga_meta_by_title', { title: route.params.title })
     }
 
     listen('update_meta', (e) => {

@@ -1,4 +1,3 @@
-use crate::prefs::manga_dir;
 use crate::prefs::manga_dir_title;
 use std::fs::remove_dir_all;
 use std::fs::{read_to_string, read_dir, write, copy};
@@ -42,19 +41,21 @@ impl MangaCard {
 pub struct Manga {
     title: String,
     chapters: Vec<Chapter>,
+    path: PathBuf,
     meta: MangaMeta,
 }
 
 impl Manga {
-    fn new(title: &str, chapters: Vec<Chapter>, meta: MangaMeta) -> Manga {
+    fn new(title: &str, chapters: Vec<Chapter>, path: PathBuf, meta: MangaMeta) -> Manga {
         Manga {
             title: title.to_string(),
             chapters: chapters,
+            path,
             meta: meta,
         }
     }
     fn update_meta(&self) -> Result<(), Box<dyn Error>> {
-        let mut meta_path = manga_dir_title(&self.title);
+        let mut meta_path = PathBuf::from(&self.path);
         meta_path.push("meta.json");
         write(&meta_path, serde_json::to_string(&self.meta)?.as_bytes())?;
         Ok(())
@@ -131,7 +132,7 @@ pub fn get_chapter_images(path: &PathBuf) -> Vec<String> {
     let mut images: Vec<String> = read_dir(path)
         .unwrap()
         .map(|image| image.unwrap().path())
-        .filter(|image| { vec!["jpeg", "jpg", "png", "webp"].contains(&image.extension().unwrap().to_str().unwrap()) })
+        .filter(|image| { image.is_file() && vec!["jpeg", "jpg", "png", "webp"].contains(&image.extension().unwrap().to_str().unwrap()) })
         .map(|image| image.file_name().unwrap().to_str().unwrap().to_string())
         .collect();
 
@@ -205,8 +206,8 @@ pub fn manga_path_to_meta_path(manga_path: &PathBuf) -> PathBuf {
     meta_path
 }
 
-pub fn get_manga_paths() -> Vec<PathBuf> {
-    read_dir(manga_dir()).unwrap()
+pub fn get_manga_paths(manga_dir: &PathBuf) -> Vec<PathBuf> {
+    read_dir(manga_dir).unwrap()
         .map(|path| path.unwrap().path())
         .filter(|path| {
             path.is_dir()
@@ -235,32 +236,54 @@ pub fn get_manga_cover_by_path(path: &PathBuf) -> PathBuf {
     chapter_cover
 }
 
-pub fn get_manga_by_path(path: &PathBuf) -> Manga {
-    let title = path.file_stem().unwrap().to_str().unwrap();
+pub fn get_manga_by_path(path: &PathBuf) -> Option<Manga> {
 
-    Manga::new(
+    if !path.is_dir() { return None }
+
+    let title = path.file_stem()?.to_str()?;
+
+    let manga = Manga::new(
         title,
         get_manga_chapters(path),
+        PathBuf::from( path.parent()?),
         get_meta(path),
-    )
+    );
+
+    Some(manga)
 }
 
-pub fn get_mangas() -> Vec<Manga> {
+pub fn get_manga_by_path_and_title(path: &PathBuf, title: &str) -> Option<Manga> {
+
+    let mut path = PathBuf::from(path);
+    path.push(title);
+
+    let manga = get_manga_by_path(&path)?;
+
+    Some(manga)
+
+}
+
+pub fn get_mangas(manga_dir: &PathBuf) -> Vec<Manga> {
+
     let mut manga_list: Vec<Manga> = vec![];
 
-    let paths = get_manga_paths();
+    let paths = get_manga_paths(manga_dir);
 
     for manga_path in paths {
-        manga_list.push(get_manga_by_path(&manga_path));
+        let manga = get_manga_by_path(&manga_path);
+        
+        if manga.is_some() {
+            manga_list.push(get_manga_by_path(&manga_path).unwrap())
+        }
     }
 
     return manga_list;
 }
 
-pub fn get_manga_cards() -> Vec<MangaCard> {
+pub fn get_manga_cards(manga_dir: &PathBuf) -> Vec<MangaCard> {
     let mut manga_cards: Vec<MangaCard> = vec![];
 
-    for path in get_manga_paths(){
+    for path in get_manga_paths(manga_dir){
         let cover = get_manga_cover_by_path(&path);
         let meta = get_meta(&path);
 
@@ -278,9 +301,10 @@ pub fn get_manga_cards() -> Vec<MangaCard> {
     manga_cards
 }
 
-pub fn get_chapter_by_title(title: &str, chapter: &str) -> Chapter {
+pub fn get_chapter_by_title(title: &str, chapter: &str, manga_dir: &PathBuf) -> Chapter {
 
-    let mut path = manga_dir_title(title);
+    let mut path = PathBuf::from(manga_dir);
+    path.push(title);
     path.push(chapter);
 
     Chapter::new(
@@ -303,22 +327,23 @@ impl PathAndMeta {
     }
 }
 
-fn get_manga_path_and_meta_by_uuid(uuid: Uuid) -> PathAndMeta {
-    get_manga_paths()
+fn get_manga_path_and_meta_by_uuid(uuid: Uuid, manga_dir: &PathBuf) -> PathAndMeta {
+    get_manga_paths(manga_dir)
         .iter()
         .map(|path| PathAndMeta::new(PathBuf::from(path), get_meta(&path)))
         .find(|pwm| pwm.meta.uuid == uuid)
         .unwrap()
 }
 
-fn get_manga_by_uuid(uuid: Uuid) -> Manga {
-    let path = get_manga_path_and_meta_by_uuid(uuid).path;
-    get_manga_by_path(&path)
+fn get_manga_by_uuid(uuid: Uuid, manga_dir: &PathBuf) -> Manga {
+    let path = get_manga_path_and_meta_by_uuid(uuid, manga_dir).path;
+    get_manga_by_path(&path).unwrap()
 }
 
-pub fn get_chapter_list_by_title(title: String) -> Vec<String> {
+pub fn get_chapter_list_by_title(title: String, manga_dir: &PathBuf) -> Vec<String> {
 
-    let path = manga_dir_title(title.as_str());
+    let mut path = PathBuf::from(manga_dir);
+    path.push(title);
     let chapters = get_manga_chapters_paths(&path);
 
     chapters.iter().map(|chapter|{
@@ -332,13 +357,15 @@ pub fn get_chapter_list_by_title(title: String) -> Vec<String> {
 
 }
 
-pub fn get_manga_title_by_uuid(uuid: Uuid) -> String {
-    let path = get_manga_path_and_meta_by_uuid(uuid).path;
+pub fn get_manga_title_by_uuid(uuid: Uuid, manga_dir: &PathBuf) -> String {
+    let path = get_manga_path_and_meta_by_uuid(uuid, manga_dir).path;
     return path.file_name().unwrap().to_str().unwrap().to_string();
 }
 
-pub fn set_manga_chapter_and_slide_by_title(title: &str, chapter: &str, slide: i32) -> Result<(), Box<dyn Error>> {
-    let mut manga = get_manga_by_path(&manga_dir_title(title));
+pub fn set_manga_chapter_and_slide_by_title(title: &str, chapter: &str, slide: i32, manga_dir: &PathBuf) -> Result<(), Box<dyn Error>> {
+
+    let mut manga = get_manga_by_path_and_title(manga_dir, title).ok_or("No manga with this title")?;
+
     manga.meta.chapter = chapter.to_string();
     manga.meta.slide = slide;
     manga.update_meta()?;
@@ -346,8 +373,10 @@ pub fn set_manga_chapter_and_slide_by_title(title: &str, chapter: &str, slide: i
     Ok(())
 }
 
-pub fn set_manga_format_by_title(title: &str, format: Format, window: tauri::Window) -> Result<(), Box<dyn Error>> {
-    let mut manga = get_manga_by_path(&manga_dir_title(title));
+pub fn set_manga_format_by_title(title: &str, format: Format, manga_dir: &PathBuf, window: tauri::Window) -> Result<(), Box<dyn Error>> {
+
+    let mut manga = get_manga_by_path_and_title(manga_dir, title).ok_or("No manga with this title")?;
+
     manga.meta.format = format;
     manga.update_meta()?;
 
@@ -357,21 +386,21 @@ pub fn set_manga_format_by_title(title: &str, format: Format, window: tauri::Win
 }
 
 
-pub fn get_manga_meta_by_title(title: &str) -> MangaMeta {
-    let path = manga_dir_title(title);
+pub fn get_manga_meta_by_title(title: &str, manga_dir: &PathBuf) -> MangaMeta {
+    let path = manga_dir_title(title, manga_dir);
     get_meta(&path)
 }
 
-pub fn update_manga_order(order_list: Vec<UuidOrderIndex>) -> Result<(), Box<dyn Error>> {
+pub fn update_manga_order(order_list: Vec<UuidOrderIndex>, manga_dir: &PathBuf) -> Result<(), Box<dyn Error>> {
     for item in order_list {
-        let mut manga = get_manga_by_uuid(item.0);
+        let mut manga = get_manga_by_uuid(item.0, manga_dir);
         manga.meta.order = item.1;
         manga.update_meta()?;
     }
     Ok(())
 }
 
-pub fn delete_manga_by_uuid(manga_uuid: Uuid) {
-    let path = get_manga_path_and_meta_by_uuid(manga_uuid).path;
+pub fn delete_manga_by_uuid(manga_uuid: Uuid, manga_dir: &PathBuf) {
+    let path = get_manga_path_and_meta_by_uuid(manga_uuid, manga_dir).path;
     remove_dir_all(path).unwrap();
 }

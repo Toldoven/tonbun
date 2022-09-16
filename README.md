@@ -31,17 +31,23 @@ The app will remember the chapter and page when you stop reading
 
 ## Planned features:
 
-### v1.0.3
-- Credits for scanlation group from MangaDex.
-- A proper support for long strip format.
-- Integration with Anilist and MyAnimeList to track progress.|
 ### v???
+
+- Integration with Anilist and MyAnimeList to track progress.
+
+### v???
+
+- Improved lonstrip support.
 - More reader settings. The reader is janky right now.
+
 ### v???
+
 - Improved downloader.
 - Download only a part of the chapters, not all.
 - Check for new chapters and download them when they are available.
+
 ### Ideas
+
 - More languages.
 - Folders in the library for a more convenient organization.
 - Read manga without downloading it.

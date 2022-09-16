@@ -1,6 +1,5 @@
 use crate::manga::Format;
 use crate::prefs::Prefs;
-use crate::prefs;
 // use crate::discord::discord_ipc_start_interval;
 
 use crate::manga;
@@ -37,54 +36,73 @@ fn message(message: String) {
 }
 
 #[tauri::command(async)]
-fn get_manga_cards() -> Vec<manga::MangaCard> {
-  manga::get_manga_cards()
+fn get_manga_cards(prefs: State<'_, PrefsStore>) -> Vec<manga::MangaCard> {
+  manga::get_manga_cards(&prefs.manga_dir())
 }
 
 #[tauri::command(async)]
-fn get_chapter_by_title(title: &str, chapter: &str) -> manga::Chapter {
-  manga::get_chapter_by_title(title, chapter)
+fn get_chapter_by_title(title: &str, chapter: &str, prefs: State<'_, PrefsStore>) -> manga::Chapter {
+  manga::get_chapter_by_title(title, chapter, &prefs.manga_dir())
 }
 
 #[tauri::command(async)]
-fn get_chapter_list_by_title(title: String) -> Vec<String> {
-  manga::get_chapter_list_by_title(title)
+fn get_chapter_list_by_title(title: String, prefs: State<'_, PrefsStore>) -> Vec<String> {
+  manga::get_chapter_list_by_title(title, &prefs.manga_dir())
 }
 
 #[tauri::command(async)]
-fn get_manga_title_by_uuid(uuid: &str) -> String {
-  manga::get_manga_title_by_uuid(Uuid::parse_str(uuid).unwrap())
+fn get_manga_title_by_uuid(uuid: &str, prefs: State<'_, PrefsStore>) -> String {
+  manga::get_manga_title_by_uuid(Uuid::parse_str(uuid).unwrap(), &prefs.manga_dir())
 }
 
 #[tauri::command(async)]
-fn get_manga_meta_by_title(title: &str) -> manga::MangaMeta {
-  manga::get_manga_meta_by_title(title)
+fn get_manga_meta_by_title(title: &str, prefs: State<'_, PrefsStore>) -> manga::MangaMeta {
+  manga::get_manga_meta_by_title(title, &prefs.manga_dir())
 }
 
 #[tauri::command(async)]
-fn delete_manga_by_uuid(uuid: &str) {
-  manga::delete_manga_by_uuid(Uuid::parse_str(uuid).unwrap())
+fn delete_manga_by_uuid(uuid: &str, prefs: State<'_, PrefsStore>) {
+  manga::delete_manga_by_uuid(Uuid::parse_str(uuid).unwrap(), &prefs.manga_dir())
 }
 
 #[tauri::command(async)]
-fn set_manga_chapter_and_slide_by_title(title: &str, chapter: &str, slide: i32) {
-  match manga::set_manga_chapter_and_slide_by_title(title, chapter, slide) {
+fn set_manga_chapter_and_slide_by_title(title: &str, chapter: &str, slide: i32, prefs: State<'_, PrefsStore>) {
+  match manga::set_manga_chapter_and_slide_by_title(title, chapter, slide, &prefs.manga_dir()) {
     Ok(()) => println!("Updated chapter ({}) and slide ({}) of {}", chapter, slide, title),
-    Err(_) => println!("Failed to update chapter and slide of {}", title),
+    Err(e) => println!("Failed to update chapter and slide of {}, ({})", title, e),
   }
 }
 
+
 #[tauri::command(async)]
-fn set_manga_format_by_title(title: &str, format: Format, window: tauri::Window) {
-  match manga::set_manga_format_by_title(title, format, window) {
+fn set_manga_chapter_and_slide_from_state(reader: State<'_, ReaderStore>, prefs: State<'_, PrefsStore>) {
+  let lock = reader.0.lock().unwrap();
+  manga::set_manga_chapter_and_slide_by_title(
+    lock.title.as_str(), 
+    lock.chapter.as_str(), 
+    lock.slide,
+    &prefs.manga_dir()
+  ).ok();
+  // println!("{:?}", result);
+}
+
+
+#[tauri::command(async)]
+fn set_reader_state(title: &str, chapter: &str, slide: i32, reader: State<'_, ReaderStore>) {
+  reader.set(title, chapter, slide);
+}
+
+#[tauri::command(async)]
+fn set_manga_format_by_title(title: &str, format: Format, prefs: State<'_, PrefsStore>, window: tauri::Window) {
+  match manga::set_manga_format_by_title(title, format, &prefs.manga_dir(), window) {
     Ok(()) => println!("Updated format"),
     Err(_) => println!("Failed to update format"),
   }
 }
 
 #[tauri::command(async)]
-fn update_manga_order(order_list: Vec<manga::UuidOrderIndex>) {
-  match manga::update_manga_order(order_list) {
+fn update_manga_order(order_list: Vec<manga::UuidOrderIndex>, prefs: State<'_, PrefsStore>) {
+  match manga::update_manga_order(order_list, &prefs.manga_dir()) {
     Ok(()) => println!("Updated manga order"),
     Err(_) => println!("Failed to update manga order"),
   }
@@ -99,9 +117,12 @@ fn search_title(query: String, lang: String) -> Result<Value, String> {
 }
 
 #[tauri::command]
-fn download_manga(uuid: String, lang: String, title: String, window: tauri::Window) {
+fn download_manga(uuid: String, lang: String, title: String, prefs: State<'_, PrefsStore>, window: tauri::Window) {
+  let prefs = prefs.0.lock().unwrap();
+  let manga_directory = PathBuf::from(&prefs.manga_directory);
+
   std::thread::spawn(move || {
-    let result = MangaDex::download_manga(&uuid, &lang, &title, &window);
+    let result = MangaDex::download_manga(&uuid, &lang, &title, &manga_directory, &window);
     match result {
       Ok(_) => println!("Downloaded manga {}", &title),
       Err(e) => {
@@ -117,8 +138,12 @@ fn download_manga(uuid: String, lang: String, title: String, window: tauri::Wind
 }
 
 #[tauri::command(async)]
-fn update_manga_dir(dir: PathBuf) {
-  prefs::update_manga_dir(dir);
+fn update_manga_dir(dir: PathBuf, prefs: State<'_, PrefsStore>, window: tauri::Window) {
+  create_dir_all(&dir).unwrap();
+
+  let mut prefs = prefs.0.lock().unwrap();
+  prefs.manga_directory = PathBuf::from(&dir);
+  window.emit_all("update_prefs", prefs.clone()).unwrap();
 }
 
 #[tauri::command]
@@ -165,21 +190,20 @@ fn set_discord_rich_presence_enabled(value: bool, prefs: State<'_, PrefsStore>, 
   }
 }
 
-#[tauri::command(async)]
-fn set_window_prefs(label: String, window: prefs::Window, prefs: State<'_, PrefsStore>, webview: tauri::Window) {
-  let mut prefs = prefs.0.lock().unwrap();
-  if label == "reader" { prefs.windows.reader = window.clone() };
-  if label == "library" { prefs.windows.library = window.clone() };
-  webview.emit_all("update_prefs", prefs.clone()).unwrap();
-}
+// #[tauri::command(async)]
+// fn set_window_prefs(label: String, window: prefs::Window, prefs: State<'_, PrefsStore>, webview: tauri::Window) {
+//   let mut prefs = prefs.0.lock().unwrap();
+//   if label == "reader" { prefs.windows.reader = window.clone() };
+//   if label == "library" { prefs.windows.library = window.clone() };
+//   webview.emit_all("update_prefs", prefs.clone()).unwrap();
+// }
 
 #[tauri::command(async)]
-fn save_prefs(prefs: State<'_, PrefsStore>) {
+fn save_prefs(prefs: State<'_, PrefsStore>) -> Result<(), String> {
   let prefs = prefs.0.lock().unwrap();
-  match prefs.save() {
-    Ok(_) => println!("Saved Prefs: {:?}", prefs),
-    Err(_) => println!("Couldn't save Prefs: {:?}", prefs),
-  }
+  let result = prefs.save();
+  if prefs.save().is_err() { return Err(format!("{:#?}", result)) }
+  Ok(())
 }
 
 #[tauri::command(async)]
@@ -227,13 +251,53 @@ impl PrefsStore {
       )
     )
   }
+
+  fn manga_dir(&self) -> PathBuf {
+    let lock = self.0.lock().unwrap();
+    PathBuf::from(&lock.manga_directory)
+  }
 }
+
+#[derive(Debug)]
+pub struct Reader {
+  pub title: String,
+  pub chapter: String,
+  pub slide: i32,
+}
+
+#[derive(Debug)]
+pub struct ReaderStore(pub Arc<Mutex<Reader>>);
+
+impl ReaderStore {
+  pub fn new() -> ReaderStore {
+    ReaderStore(
+      Arc::new(
+        Mutex::new(
+          Reader {
+            title: "".to_string(),
+            chapter: "".to_string(),
+            slide: 0,
+          }
+        )
+      )
+    )
+  }
+  pub fn set(&self, title: &str, chapter: &str, slide: i32) {
+    let mut lock = self.0.lock().unwrap();
+    lock.title = title.to_string();
+    lock.chapter = chapter.to_string();
+    lock.slide = slide;
+  }
+}
+
+
 
 // Run
 
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_persisted_scope::init())
+    .plugin(tauri_plugin_window_state::Builder::default().set_auto_show(false).build())
     .invoke_handler(tauri::generate_handler![
       message,
       search_title,
@@ -244,6 +308,7 @@ pub fn run() {
       get_chapter_list_by_title,
       get_chapter_by_title,
       set_manga_chapter_and_slide_by_title,
+      set_manga_chapter_and_slide_from_state,
       get_manga_meta_by_title,
       delete_manga_by_uuid,
       update_manga_dir,
@@ -252,16 +317,13 @@ pub fn run() {
       save_prefs,
       set_lang,
       set_reader_format,
-      set_window_prefs,
       set_manga_format_by_title,
       set_discord_rich_presence_enabled,
       discord_set_activity,
-      discord_clear_activity
+      discord_clear_activity,
+      set_reader_state
     ])
     .setup(|app| {
-
-      let manga_dir = prefs::manga_dir();
-      create_dir_all(&manga_dir).unwrap();
 
       app.manage(PrefsStore::new());
 
@@ -274,6 +336,10 @@ pub fn run() {
         let client = app.state::<DeclarativeDiscordIpcClient>();
         client.enable();
       } 
+
+      app.manage(ReaderStore::new());
+
+      create_dir_all(&prefs.manga_directory).unwrap();
 
       Ok(())
 

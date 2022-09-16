@@ -39,7 +39,7 @@ const handleDirectorySelect = async () => {
        const dir = await open({ directory: true })
         if (!dir) return
         await invoke('update_manga_dir', { dir })
-        await prefs.loadPrefs()
+        // await prefs.loadPrefs()
         await libraryCards.update()
     } catch (e) {
         console.error(e)
@@ -63,7 +63,7 @@ const { t } = useI18n()
 
 <template>
 
-<Dialog :header="t('settings.settings')" v-model:visible="settingsModal.value" :modal="true" :draggable="false" style="width: 512px">
+<Dialog :header="t('settings.settings')" v-model:visible="settingsModal.value" :modal="true" :draggable="false" style="width: 512px" :dismissableMask="true">
     <div class="setting-entry">
         <p class="mb-2">{{ t('settings.language') }}</p>
         <SelectButton v-model="selectedLanguage" :options="languages" option-label="name" option-value="code"/>

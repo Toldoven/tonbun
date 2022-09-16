@@ -1,5 +1,5 @@
 use tauri::api::path::{document_dir, app_dir};
-use std::fs::{create_dir_all, read_to_string, write};
+use std::fs::{read_to_string, write};
 use std::path::PathBuf;
 use std::error::Error;
 use serde::{Serialize, Deserialize};
@@ -7,28 +7,28 @@ use tauri::generate_context;
 
 use crate::manga::Format;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Window {
-    pub fullscreen: bool,
-    pub x: i32,
-    pub y: i32,
-}
+// #[derive(Clone, Debug, Serialize, Deserialize)]
+// pub struct Window {
+//     pub fullscreen: bool,
+//     pub x: i32,
+//     pub y: i32,
+// }
 
-impl Window {
-    pub fn new(fullscreen: bool, x: i32, y: i32) -> Window {
-        Window {
-            fullscreen,
-            x,
-            y,
-        }
-    }
-}
+// impl Window {
+//     pub fn new(fullscreen: bool, x: i32, y: i32) -> Window {
+//         Window {
+//             fullscreen,
+//             x,
+//             y,
+//         }
+//     }
+// }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Windows {
-    pub reader: Window,
-    pub library: Window,
-}
+// #[derive(Clone, Debug, Serialize, Deserialize)]
+// pub struct Windows {
+//     pub reader: Window,
+//     pub library: Window,
+// }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Direction {
@@ -60,7 +60,7 @@ pub struct Prefs {
     pub manga_directory: PathBuf,
     pub discord_app_id: String,
     pub discord_rich_presence_enabled: bool,
-    pub windows: Windows,
+    // pub windows: Windows,
     pub reader: Reader,
 }
 
@@ -85,10 +85,10 @@ impl Prefs {
             manga_directory: default_manga_dir(),
             discord_app_id: "1012114766141075456".to_string(),
             discord_rich_presence_enabled: false,
-            windows: Windows {
-                reader: Window::new(false, 600, 900),
-                library: Window::new(false, 800, 600),
-            },
+            // windows: Windows {
+            //     reader: Window::new(false, 600, 900),
+            //     library: Window::new(false, 800, 600),
+            // },
             reader: Reader {
                 direction: Direction::Vertical,
                 reverse: false,
@@ -135,22 +135,25 @@ impl Prefs {
     }
 }
 
-pub fn manga_dir() -> PathBuf {
-    Prefs::load().unwrap().manga_directory
-}
+// pub fn manga_dir() -> PathBuf {
 
-pub fn manga_dir_title(title: &str) -> PathBuf {
-    let mut manga_dir = manga_dir();
+//     let prefs = Prefs::load();
+
+//     prefs.unwrap().manga_directory
+// }
+
+pub fn manga_dir_title(title: &str, manga_dir: &PathBuf) -> PathBuf {
+    let mut manga_dir = PathBuf::from(manga_dir);
     manga_dir.push(title);
     manga_dir
 }
 
-pub fn update_manga_dir(dir: PathBuf) {
-    create_dir_all(&dir).unwrap();
-    let mut prefs = Prefs::load().unwrap();
-    prefs.manga_directory = PathBuf::from(&dir);
-    prefs.save().unwrap();
-}
+// pub fn update_manga_dir(dir: PathBuf) {
+//     create_dir_all(&dir).unwrap();
+//     let mut prefs = Prefs::load().unwrap();
+//     prefs.manga_directory = PathBuf::from(&dir);
+//     prefs.save().unwrap();
+// }
 
 // pub fn run() {
 //     let manga_dir = manga_dir();

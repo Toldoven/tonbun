@@ -9,8 +9,10 @@ import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
 import OverlayPanel from 'primevue/overlaypanel'
 import Menu from './Menu.vue';
+import { useMetaStore } from '../../stores/meta';
 
 const reader = useReaderStore()
+const meta = useMetaStore()
 
 const lastMove = ref(Date.now())
 const visible = ref(false)
@@ -43,6 +45,10 @@ onMounted(async () => {
     })
 
     fullscreen.value = await webview.isFullscreen()
+
+    await meta.loadMeta()
+    await reader.getChapterList()
+    await reader.updateChapterData()
 })
 
 const fullscreen = ref(false)
@@ -50,14 +56,19 @@ const fullscreen = ref(false)
 const removeFocus = () => (document.activeElement as HTMLElement).blur()
 
 const toggleFullscreen = () => {
+    removeFocus()
     fullscreen.value = !fullscreen.value
     webview.setFullscreen(fullscreen.value)
-    removeFocus()
 }
 
 const toggleMenu = (event) => {
-    menu.value.toggle(event)
     removeFocus()
+    menu.value.toggle(event)
+}
+
+const closeWindow = () => {
+  removeFocus()
+  webview.emit('tauri://close-requested')
 }
 
 watch(isDropdownShown, () => removeFocus())
@@ -68,7 +79,7 @@ watch(isDropdownShown, () => removeFocus())
 <template>
 
 <div :class="`mouse-move fixed flex gap-2 flex-row-reverse z-3 right-0 m-3 ${!visible ? `hidden` : ''}`">
-  <Button @click="webview.emit('tauri://close-requested')" tab-v-if="fullscreen" icon="pi" class="p-button-plain p-button-rounded p-button-text">
+  <Button @click="closeWindow" tab-v-if="fullscreen" icon="pi" class="p-button-plain p-button-rounded p-button-text">
       <span class="material-symbols-outlined">close</span>
   </Button>
   <Button @click="toggleFullscreen" icon="pi" class="p-button-plain p-button-rounded p-button-text" :tabindex="-1">

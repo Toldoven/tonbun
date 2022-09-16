@@ -8,7 +8,6 @@ use std::fs::{create_dir_all};
 use std::path::{PathBuf, Path};
 use serde::{Serialize, Deserialize};
 use crate::manga::{ MangaMeta, create_custom_meta, Format };
-use crate::prefs::manga_dir;
 // use uuid::{uuid, Uuid};
 
 use uuid::{Uuid};
@@ -250,12 +249,12 @@ impl MangaDex {
         Ok(DownloadChapters::new(chapters, repeats))
     }
 
-    pub fn download_manga(manga_uuid: &str, lang: &str, title: &str, window: &Window) -> Result<(), Box<dyn Error>> {
+    pub fn download_manga(manga_uuid: &str, lang: &str, title: &str, path: &PathBuf, window: &Window) -> Result<(), Box<dyn Error>> {
 
         let chapters_data = MangaDex::aggregate_manga_chapters(&manga_uuid, lang)?;
         let download_manga = MangaDex::volumes_to_chapters(&chapters_data["volumes"])?;
 
-        let mut path = manga_dir();
+        let mut path = PathBuf::from(path);
         path.push(&title.replace("/", "|"));
 
         let mut index: i32 = 2;

@@ -20,6 +20,7 @@ export const useReaderStore = defineStore('reader', () => {
     const chapterList = ref<string[]>([])
 
     const getChapterList = async () => {
+        timestamp.value = Date.now()
         chapterList.value = await invoke('get_chapter_list_by_title', { title: route.params.title })
         chapterList.value.push()
         if (route.params.chapter === '0') router.push({
@@ -81,8 +82,13 @@ export const useReaderStore = defineStore('reader', () => {
         loadingChapter.value = false
     }
 
-    const updateDiscordRP = () => {
-        invoke('discord_set_activity', {
+    const updateDiscordRP = async () => {
+
+        if (!route.params.title || !route.params.chapter) return
+
+        // if (!(await webview.isVisible())) return
+
+        await invoke('discord_set_activity', {
             details: "Reading manga",
             state: `${route.params.title} - ${route.params.chapter}`,
             timestamp: timestamp.value,
@@ -94,7 +100,33 @@ export const useReaderStore = defineStore('reader', () => {
     
     watch(currentChapter, async (value, oldValue) => {
         if (value === oldValue) return
+        if (!route.params.title || !route.params.chapter) return
         updateChapterData()
+    }, { immediate: true })
+
+    watch(route, async() => {
+
+        // console.log(oldValue?.params?.chapter)
+        // console.log(value?.params?.chapter)
+
+        if (!route.params.title || !route.params.chapter) return
+
+        invoke('set_reader_state', {
+            title: route.params.title as string || "",
+            chapter: route.params.chapter as string || "",
+            slide: parseInt(route.params.slide as string) || 0,
+        })
+
+        // if (value?.params?.title !== oldValue?.params?.title) {
+        //     await getChapterList()
+        //     // await updateChapterData()
+        //     return
+        // }
+
+        // if (value?.params?.chapter !== oldValue?.params?.chapter) {
+        //     await updateChapterData()
+        // }
+
     }, { immediate: true })
 
     // Slider 
@@ -113,5 +145,5 @@ export const useReaderStore = defineStore('reader', () => {
 
     // Return
 
-    return { chapterList, loadingChapter, getChapterList, updateChapterData, resetChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter, updateDiscordRP, push }
+    return { chapterList, loadingChapter, getChapterList, updateChapterData, resetChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter, updateDiscordRP, push, timestamp }
 })

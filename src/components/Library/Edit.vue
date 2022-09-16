@@ -32,7 +32,7 @@ const { t } = useI18n()
 
 <template>
 
-<Dialog :header="editModal.manga.title" v-model:visible="editModal.value" :modal="true" :draggable="false" style="width: 512px">
+<Dialog :header="editModal.manga.title" v-model:visible="editModal.value" :modal="true" :draggable="false" style="width: 512px" :dismissableMask="true">
 
 
     <div v-if="editModal.meta?.credits" class="mb-4">
