@@ -21,13 +21,19 @@ reqwest = { version = "0.11", features = ["blocking", "json"] }
 directories = "4.0.1"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+queryst = "2.1.0"
 image = "0.24.3"
 alphanumeric-sort = "1.4.4"
+ts-rs = { version = "6.1", features = ["uuid-impl"] }
 declarative-discord-rich-presence = { git = "https://github.com/KPidS/declarative-discord-rich-presence" }
+
 
 tauri = { version = "^1.0.5", features = ["api-all", "devtools"] }
 tauri-plugin-persisted-scope = { version = "0.1", features = ["protocol-asset"] }
 tauri-plugin-window-state = { git = "https://github.com/KPidS/tauri-plugin-window-state" }
+tauri-plugin-deep-link = { git = "https://github.com/FabianLars/tauri-plugin-deep-link" }
+
+uuid = { version = "1.1.2", features = ["v4", "fast-rng", "serde", "macro-diagnostics"] }
 
 # [patch.crates-io]
 # discord-rich-presence = { git = "https://github.com/KPidS/declarative-discord-rich-presenc" }
@@ -35,15 +41,6 @@ tauri-plugin-window-state = { git = "https://github.com/KPidS/tauri-plugin-windo
 # [dependencies.tauri-plugin-fs-watch]
 # git = "https://github.com/tauri-apps/tauri-plugin-fs-watch"
 # tag = "v0.1.0"
-
-[dependencies.uuid]
-version = "1.0.0"
-features = [
-    "v4",
-    "fast-rng",
-    "macro-diagnostics",
-    "serde"
-]
 
 [features]
 default = [ "custom-protocol" ]

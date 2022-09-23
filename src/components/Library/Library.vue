@@ -13,18 +13,27 @@ import Settings from './Settings.vue'
 import { useI18n } from 'vue-i18n';
 import { usePrefsStore } from '../../stores/prefs';
 import { useSettingsModalStore } from '../../stores/settingsModal';
+import { Manga } from '@/types/mangaDex';
 
 // const searchInput = ref('');
 const search = ref('')
 const searching = ref(false)
 const lastInput = ref(Date.now())
 
-const result = ref<any>([])
+const result = ref<Array<Manga>>([])
+const error = ref<boolean>(false)
 
-const handleSearchInput = (value: any) => {
+const handleSearchInput = (e: Event) => {
+  handleSearch(
+    (e.target as HTMLInputElement).value
+  )
+}
+
+const handleSearch = (value: string) => {
+
+  search.value = value
 
   searching.value = true
-  search.value = value
 
   const whenRun = Date.now()
   lastInput.value = whenRun
@@ -47,9 +56,9 @@ const prefs = usePrefsStore()
 
 const doSearch = async () => {
   try {
-    result.value = await invoke('search_title', { query: search.value, lang: prefs.value.lang })
+    result.value = await invoke<Array<Manga>>('search_title', { query: search.value, lang: prefs.value.lang })
   } catch (e) {
-    result.value = { error: "Can't connect to MangaDex" }
+    error.value = true
   }
 }
 
@@ -70,11 +79,11 @@ const { t } = useI18n()
 
     <span class="w-full mb-3 p-input-icon-left p-input-icon-right">
       <i class="pi pi-search" />
-      <InputText class="w-full" type="text" :placeholder="t('search')" :value="search" @input="(e: any) => handleSearchInput(e.target.value)"></InputText>
-      <i v-if="search" class="pi pi-times" @click="() => handleSearchInput('')"/>
+      <InputText class="w-full" type="text" :placeholder="t('search')" :value="search" @input="(e: Event) => handleSearchInput(e)"></InputText>
+      <i v-if="search" class="pi pi-times" @click="() => handleSearch('')"/>
     </span>
 
-    <Results :result="result" :searching="searching" v-if="search"/>
+    <Results :result="result" :error="error" :searching="searching" v-if="search"/>
     <Grid v-else/>
 
   </main>
@@ -105,6 +114,18 @@ const { t } = useI18n()
 
 .pi-cog {
   font-size: 1.5rem !important;
+}
+
+.pi-times {
+  cursor: pointer;
+}
+
+.pi-search {
+  width: fit-content;
+  pointer-events: none;
+  -webkit-pointer-events: none;
+  -moz-pointer-events: none;
+  -ms-pointer-events: none;
 }
 
 </style>

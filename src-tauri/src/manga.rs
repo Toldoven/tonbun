@@ -8,12 +8,15 @@ use std::result::Result;
 use std::error::Error;
 use uuid::Uuid;
 use alphanumeric_sort::{sort_str_slice, sort_path_slice};
+use ts_rs::TS;
 
 #[derive(Serialize, Deserialize)]
 pub struct UuidOrderIndex(Uuid, i32);
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
+#[ts(export)]
 pub struct MangaCard {
+    #[ts(type = "string")]
     uuid: Uuid,
     connector: String,
     title: String,
@@ -37,7 +40,8 @@ impl MangaCard {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, TS)]
+#[ts(export)]
 pub struct Manga {
     title: String,
     chapters: Vec<Chapter>,
@@ -56,13 +60,15 @@ impl Manga {
     }
     fn update_meta(&self) -> Result<(), Box<dyn Error>> {
         let mut meta_path = PathBuf::from(&self.path);
-        meta_path.push("meta.json");
-        write(&meta_path, serde_json::to_string(&self.meta)?.as_bytes())?;
+        meta_path.push(&self.title);
+        meta_path.push("meta.toml");
+        write(&meta_path, toml::to_string(&self.meta)?.as_bytes())?;
         Ok(())
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, TS)]
+#[ts(export)]
 pub struct Chapter {
     path: PathBuf,
     images: Vec<String>,
@@ -77,20 +83,68 @@ impl Chapter {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, TS)]
+#[serde(default)]
+#[ts(export)]
 pub struct MangaMeta {
-    uuid: Uuid,
-    connector: String,
-    order: i32,
-    chapter: String,
-    slide: i32,
-    finished_chapters: Vec<String>,
-    format: Format,
-    credits: Option<Url>
+    #[ts(type = "string")]
+    pub uuid: Uuid,
+    pub connector: String,
+    pub order: i32,
+    pub chapter: String,
+    pub slide: i32,
+    pub finished_chapters: Vec<String>,
+    pub format: Format,
+    #[ts(type = "string")]
+    pub credits: Option<Url>,
+    pub integration: Integration,
+}
+
+#[derive(Serialize, Deserialize, Clone, TS)]
+#[serde(default)]
+#[ts(export)]
+pub struct Integration {
+    pub anilist: Option<String>,
+    pub myanimelist: Option<String>,
+}
+
+impl Default for Integration {
+    fn default() -> Self {
+        Self {
+            anilist: None,
+            myanimelist: None,
+        }
+    }
+}
+
+impl Default for MangaMeta {
+    fn default() -> Self {
+        Self::new(
+            Uuid::new_v4(),
+            "Local",
+            -1,
+            "0",
+            0,
+            vec![],
+            Format::Default,
+            None,
+            Integration::default(),
+        )
+    }
 }
 
 impl MangaMeta {
-    pub fn new(uuid: Uuid, connector: &str, order: i32, chapter: &str, slide: i32, finished_chapters: Vec<String>, format: Format, credits: Option<Url>) -> MangaMeta {
+    pub fn new(
+        uuid: Uuid,
+        connector: &str,
+        order: i32,
+        chapter: &str,
+        slide: i32,
+        finished_chapters: Vec<String>,
+        format: Format,
+        credits: Option<Url>,
+        integration: Integration
+    ) -> MangaMeta {
         MangaMeta {
             uuid,
             connector: connector.to_string(),
@@ -100,24 +154,13 @@ impl MangaMeta {
             finished_chapters,
             format,
             credits,
+            integration,
         }
-    }
-
-    pub fn default() -> MangaMeta {
-        MangaMeta::new(
-            Uuid::new_v4(),
-            "Local",
-            -1,
-            "0",
-            0,
-            vec![],
-            Format::Default,
-            None
-        )
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, TS)]
+#[ts(export)]
 pub enum Format {
     Default,
     Slides,
@@ -173,13 +216,13 @@ pub fn get_manga_chapters(manga_path: &PathBuf) -> Vec<Chapter> {
 pub fn create_default_meta(manga_path: &PathBuf) -> MangaMeta {
     let meta_path = manga_path_to_meta_path(manga_path);
     let meta = MangaMeta::default();
-    write(meta_path, serde_json::to_string(&meta).unwrap().as_bytes()).unwrap();
+    write(meta_path, toml::to_string(&meta).unwrap().as_bytes()).unwrap();
     return meta;
 }
 
 pub fn create_custom_meta(manga_path: &PathBuf, meta: MangaMeta) -> Result<MangaMeta, Box<dyn Error>> {
     let meta_path = manga_path_to_meta_path(manga_path);
-    write(meta_path, serde_json::to_string(&meta)?.as_bytes())?;
+    write(meta_path, toml::to_string(&meta)?.as_bytes())?;
     Ok(meta)
 }
 
@@ -192,7 +235,7 @@ fn get_meta(manga_path: &PathBuf) -> MangaMeta {
     }
 
     let file = read_to_string(&meta_path).unwrap();
-    let meta: Result<MangaMeta, _> = serde_json::from_str(file.as_str());
+    let meta: Result<MangaMeta, _> = toml::from_str(file.as_str());
 
     match meta {
         Ok(result) => return result,
@@ -202,7 +245,7 @@ fn get_meta(manga_path: &PathBuf) -> MangaMeta {
 
 pub fn manga_path_to_meta_path(manga_path: &PathBuf) -> PathBuf {
     let mut meta_path = PathBuf::from(manga_path);
-    meta_path.push("meta.json");
+    meta_path.push("meta.toml");
     meta_path
 }
 

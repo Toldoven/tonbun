@@ -4,7 +4,7 @@ import { ref, watch, computed } from 'vue'
 
 import Card from './Grid/Card.vue'
 import Draggable from 'vuedraggable'
-import { useLibraryCardsStore } from '../../stores/libraryCards'
+import { useLibraryCardsStore } from '@/stores/libraryCards'
 import { useI18n } from 'vue-i18n'
 
 const libraryCards = useLibraryCardsStore()

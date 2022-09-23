@@ -83,18 +83,18 @@ a {
 //   -ms-pointer-events: none;
 // }
 
-input div[pseudo] {
-  pointer-events: none;
-  -webkit-pointer-events: none;
-  -moz-pointer-events: none;
-  -ms-pointer-events: none;
-}
+// input div[pseudo] {
+//   pointer-events: none;
+//   -webkit-pointer-events: none;
+//   -moz-pointer-events: none;
+//   -ms-pointer-events: none;
+// }
 
-i {
-  pointer-events: none;
-  -webkit-pointer-events: none;
-  -moz-pointer-events: none;
-  -ms-pointer-events: none;
-}
+// i {
+//   pointer-events: none;
+//   -webkit-pointer-events: none;
+//   -moz-pointer-events: none;
+//   -ms-pointer-events: none;
+// }
 
 </style>

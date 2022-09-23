@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "ts-rs": "(cd src-tauri && cargo test && cd -)" 
   },
   "dependencies": {
     "@tauri-apps/api": "^1.0.0-rc.5",

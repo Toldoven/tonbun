@@ -2,18 +2,16 @@
 
 import SwiperC from './SwiperC.vue'
 import Longstrip from './Longstrip.vue';
-import { useReaderSettingsStore } from '../../stores/readerSettings';
-import { useMetaStore } from '../../stores/meta';
 import { usePrefsStore } from '../../stores/prefs';
 import { computed } from 'vue';
+import { useReaderStore } from '@/stores/reader';
 
-const settings = useReaderSettingsStore()
-const meta = useMetaStore()
 const prefs = usePrefsStore()
+const reader = useReaderStore()
 
 const defaultFormat = computed(() => prefs.value?.reader?.default_format )
 
-const metaFormat = computed(() => meta.value?.format )
+const metaFormat = computed(() => reader.manga?.meta?.format )
 
 </script>
 

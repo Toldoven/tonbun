@@ -1,6 +1,5 @@
 // import {invoke} from '@tauri-apps/api/tauri'
-import {WindowManager} from '@tauri-apps/api/window'
-
+import { WindowManager } from '@tauri-apps/api/window'
 
 export const addFullscreenEventListener = (window: Window, webview: WindowManager) => {
     window.addEventListener("keyup", async (e) => {
@@ -8,6 +7,8 @@ export const addFullscreenEventListener = (window: Window, webview: WindowManage
         await webview.setFullscreen(!(await webview.isFullscreen()))
     })
 }
+
+// export const errorToast
 
 // export const loadWindowPrefs = async (webview: WindowManager, prefs) => {
 //     try {

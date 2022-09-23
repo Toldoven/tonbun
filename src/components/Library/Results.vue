@@ -4,12 +4,12 @@ import Skeleton from 'primevue/skeleton'
 import Card from './Results/Card.vue'
 import Message from 'primevue/message'
 import { useI18n } from 'vue-i18n'
+import { PropType } from 'vue';
+import { Manga, MangaSearchResponse } from '@/types/mangaDex';
 
 const props = defineProps({
-    result: {
-        type: Object,
-        required: true,
-    },
+    result: Object as PropType<Array<Manga>>,
+    error: Boolean,
     searching: Boolean,
 })
 
@@ -30,7 +30,7 @@ const { t } = useI18n()
                 </div>
             </div>
         </div>
-        <Message v-else-if="result.error" severity="error" :closable="false">{{ t('error.cantConnect') }}</Message>
+        <Message v-else-if="error" severity="error" :closable="false">{{ t('error.cantConnect') }}</Message>
         <div v-else-if="result.length > 0" class="resultGrid">
             <Card v-for="item in result" :item="item"/>
         </div>

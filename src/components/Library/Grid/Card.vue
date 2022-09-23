@@ -13,6 +13,7 @@ import { useI18n } from 'vue-i18n'
 import { usePrefsStore } from '../../../stores/prefs'
 import { event } from '@tauri-apps/api'
 import { message } from '@tauri-apps/api/dialog'
+import { MangaMeta } from '@rs-ts/MangaMeta'
 
 const libraryCards = useLibraryCardsStore();
 const editModal = useEditModalStore();
@@ -36,13 +37,6 @@ const props = defineProps({
 
 const cover = convertFileSrc(props.localCover)
 
-// const loading = ref(false)
-
-// const cWebview = appWindow
-
-// onMounted(() => {
-//   cWebview.listen('change_url', (event: any) => console.log(event.payload))
-// })
 
 const handleRead = async () => {
   try {
@@ -53,7 +47,7 @@ const handleRead = async () => {
 
     // await new Promise(r => setTimeout(r, 2000));
 
-    const meta: any = await invoke('get_manga_meta_by_title', { title: props.title })
+    const meta = await invoke<MangaMeta>('get_manga_meta_by_title', { title: props.title })
     const url = `/read/${props.title}/${meta.chapter}/${meta.slide}`
 
     let webview = WebviewWindow.getByLabel('reader')
@@ -77,7 +71,7 @@ const handleRead = async () => {
 
 const handleEdit = async () => {
   editModal.value = true
-  editModal.manga = <any>{
+  editModal.manga = {
     uuid: props.uuid,
     title: props.title,
   }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
-import { appWindow, getCurrent } from '@tauri-apps/api/window';
-import { onMounted, ref, watch} from 'vue';
+import { getCurrent } from '@tauri-apps/api/window';
+import { computed, onMounted, ref, watch} from 'vue';
 import { useReaderStore } from '../../stores/reader'
 import Chapter from './Chapter.vue'
 
@@ -9,10 +9,9 @@ import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
 import OverlayPanel from 'primevue/overlaypanel'
 import Menu from './Menu.vue';
-import { useMetaStore } from '../../stores/meta';
+import { fileName } from '@/lib';
 
 const reader = useReaderStore()
-const meta = useMetaStore()
 
 const lastMove = ref(Date.now())
 const visible = ref(false)
@@ -46,9 +45,6 @@ onMounted(async () => {
 
     fullscreen.value = await webview.isFullscreen()
 
-    await meta.loadMeta()
-    await reader.getChapterList()
-    await reader.updateChapterData()
 })
 
 const fullscreen = ref(false)
@@ -78,7 +74,7 @@ watch(isDropdownShown, () => removeFocus())
 
 <template>
 
-<div :class="`mouse-move fixed flex gap-2 flex-row-reverse z-3 right-0 m-3 ${!visible ? `hidden` : ''}`">
+<div :class="`reader-buttons mouse-move fixed flex gap-2 flex-row-reverse z-3 right-0 m-3 ${!visible ? `hidden` : ''}`">
   <Button @click="closeWindow" tab-v-if="fullscreen" icon="pi" class="p-button-plain p-button-rounded p-button-text">
       <span class="material-symbols-outlined">close</span>
   </Button>
@@ -107,12 +103,16 @@ watch(isDropdownShown, () => removeFocus())
   ></Dropdown>
 </div>
 
-<Chapter/>
+<Chapter />
 
 </template>
 
 
 <style lang="scss">
+
+.reader-buttons {
+  mix-blend-mode: difference !important;
+}
 
 .pi-cog {
   font-size: 1.5rem !important;

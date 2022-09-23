@@ -5,13 +5,14 @@ import { useLibraryCardsStore } from "../../../stores/libraryCards";
 
 import Button from "primevue/button";
 import ProgressBar from 'primevue/progressbar'
-import { computed, ref } from "vue";
+import { computed, PropType, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { usePrefsStore } from "../../../stores/prefs";
+import { Cover, Manga, Relationship } from "@/types/mangaDex";
 
 const props = defineProps({
     item: {
-        type: Object,
+        type: Object as PropType<Manga>,
         required: true,
     },
 });
@@ -31,10 +32,10 @@ const title = computed(() => {
 
 const libraryCards = useLibraryCardsStore();
 
-const getCover = (manga: any) => {
-    const filename = manga.relationships.find(
-        (item: any) => item.type === "cover_art"
-    ).attributes.fileName;
+const getCover = (manga: Manga) => {
+    const filename = (manga.relationships.find(
+        (item: Relationship) => item.type === "cover_art"
+    ) as Cover).attributes.fileName;
     return (
         "https://uploads.mangadex.org/covers/" +
         manga.id +
@@ -44,7 +45,7 @@ const getCover = (manga: any) => {
     );
 };
 
-const downloadManga = (manga: any) => {
+const downloadManga = (manga: Manga) => {
     if (libraryCards.downloading[manga.id]) return
     libraryCards.startDownloading(manga.id)
     invoke("download_manga", {
@@ -56,7 +57,7 @@ const downloadManga = (manga: any) => {
 
 const deleteLoading = ref(false)
 
-const handleDelete = async (manga: any) => {
+const handleDelete = async (manga: Manga) => {
     try {
         deleteLoading.value = true
         await libraryCards.deleteMangaByUuid(manga.id)
@@ -79,9 +80,7 @@ const { t } = useI18n()
             <img :src="getCover(item)" class="border-round" />
         </div>
         <div class="p-5 w-full">
-            <!-- <p>{{ item.id }}</p> -->
             <h3>{{ title }}</h3>
-            <!-- <p>{{ libraryCards.value.find((card: any) => card.uuid === card.id ) }}</p> -->
             <div class="mt-3 w-full">
                 <div v-if="!!libraryCards.downloading[item.id]">
                     <div v-if="libraryCards.downloading[item.id].outOf <= 0">
@@ -89,7 +88,6 @@ const { t } = useI18n()
                     </div>
                     <div v-else>
                         <ProgressBar mode="determinate" :value="(libraryCards.downloading[item.id].chapter / libraryCards.downloading[item.id].outOf)*100"/>
-                        <!-- <p>Downloading</p> -->
                         <p class="mt-2">
                             {{ libraryCards.downloading[item.id].chapter }}/{{
                                 libraryCards.downloading[item.id].outOf
@@ -98,7 +96,7 @@ const { t } = useI18n()
                     </div>
                 </div>
                 <Button
-                    v-else-if="!libraryCards.value.find((card: any) => card.uuid === item.id && card.connector === 'MangaDex')"
+                    v-else-if="!libraryCards.value.find((card) => card.uuid === item.id && card.connector === 'MangaDex')"
                     @click="downloadManga(item)"
                 >
                     {{ t('download') }}

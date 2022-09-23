@@ -3,17 +3,21 @@ import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import { listen } from "@tauri-apps/api/event"
 import { WebviewWindow } from "@tauri-apps/api/window";
+import { Prefs } from "@rs-ts/Prefs";
 // const { t, locale } = useI18n();
 
 export const usePrefsStore = defineStore('prefs', () => {
 
-    const value = ref<any>({})
+    const value = ref<Prefs | any>({})
 
     const readerWindow = WebviewWindow.getByLabel('reader')
 
     const loadPrefs = async () => value.value = await invoke('read_prefs')
 
-    listen('update_prefs', (e) => value.value = e.payload)
+    listen<Prefs>('update_prefs', (e) => {
+        value.value = e.payload
+        console.log('Update prefs')
+    })
 
     const setLang = (lang: string) => invoke('set_lang', { lang })
 
@@ -27,6 +31,8 @@ export const usePrefsStore = defineStore('prefs', () => {
         }
     }
 
+    const anilistOauthLogout = () => invoke('anilist_oauth_logout')
+
     const setReaderFormat = (format: String) => invoke('set_reader_format', { format })
 
     // watch(value, () => {
@@ -35,5 +41,5 @@ export const usePrefsStore = defineStore('prefs', () => {
 
     // loadPrefs()
 
-    return { value, setLang, loadPrefs, setDiscordRichPresence, setReaderFormat }
+    return { value, anilistOauthLogout, setLang, loadPrefs, setDiscordRichPresence, setReaderFormat }
 })

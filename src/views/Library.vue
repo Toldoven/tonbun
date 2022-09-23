@@ -11,10 +11,13 @@ import { useLibraryCardsStore } from '../stores/libraryCards'
 import { usePrefsStore } from '../stores/prefs'
 import { invoke } from '@tauri-apps/api'
 import { message } from '@tauri-apps/api/dialog'
-import { event } from '@tauri-apps/api'
+
+import { useToast } from 'primevue/usetoast'
 
 const webview: WindowManager = getCurrent()
 const libraryCards = useLibraryCardsStore()
+
+const toast = useToast()
 
 const closeReader = async () => {
   try {
@@ -34,7 +37,6 @@ const setupWindow = async (webview: WindowManager) => {
     addFullscreenEventListener(window, webview)
 
     webview.once('tauri://close-requested', async () => {
-      console.log('Hellooooo')
       try {
         await Promise.all([
           libraryCards.saveOrder(),
@@ -42,18 +44,30 @@ const setupWindow = async (webview: WindowManager) => {
           invoke('save_prefs'),
         ])
       } catch (e) {
-        console.error(e)
         await message(`Error when trying to close the app: ${e}`);
       } finally {
-        console.log('???????')
         await closeReader()
         await webview.close()
       }
     })
+    webview.listen<String>('error', (e) => {
+      toast.add({
+        severity: 'error',
+        summary: 'Ошибка',
+        detail: e.payload,
+        life: 5000,
+      })
+    }) 
+    webview.listen<String>('success', (e) => {
+      toast.add({
+        severity: 'success',
+        summary: 'Успех',
+        detail: e.payload,
+        life: 5000,
+      })
+    }) 
 
     await prefs.loadPrefs()
-    
-    // await loadWindowPrefs(webview, prefs.value)
 
   } catch (e) {
     console.error(e)
@@ -69,7 +83,6 @@ const setLang = (selectedLang: string) => {
 
 onMounted(async () => {
   await setupWindow(webview)
-
   // if prefs.
   // invoke('discord_start_interval')
 })

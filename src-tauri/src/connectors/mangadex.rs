@@ -2,12 +2,13 @@ use downloader::{Download, Downloader};
 use reqwest::blocking::{Client};
 use reqwest::Url;
 use serde_json::Value;
+use ts_rs::TS;
 
 use std::error::Error;
 use std::fs::{create_dir_all};
 use std::path::{PathBuf, Path};
 use serde::{Serialize, Deserialize};
-use crate::manga::{ MangaMeta, create_custom_meta, Format };
+use crate::manga::{ MangaMeta, create_custom_meta, Format, Integration };
 // use uuid::{uuid, Uuid};
 
 use uuid::{Uuid};
@@ -50,7 +51,8 @@ impl DownloadChapters {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(export)]
 struct UpdateProgressPayload {
     uuid: String,
     progress: usize,
@@ -65,7 +67,8 @@ impl UpdateProgressPayload {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(export)]
 struct StartDownloadingPayload {
     uuid: String,
     out_of: usize,
@@ -201,9 +204,24 @@ impl MangaDex {
         
         let format = if tag.is_some() { Format::Longstrip } else { Format::Default };
 
-        create_custom_meta(&manga_path, MangaMeta::new(
-            uuid, "MangaDex", -1, "0", 0, vec![], format, Some(credit)
-        ))?;
+        let (anilist, myanimelist) = (|| -> Option<(Option<String>, Option<String>)> {
+            let links = manga.get("data")?.get("attributes")?.get("links")?;
+            Some((
+                (|| -> Option<String> { Some(links.get("al")?.as_str()?.to_string()) })(),
+                (|| -> Option<String> { Some(links.get("mal")?.as_str()?.to_string()) })(),
+            ))
+        })().ok_or("Failed to parse links")?;
+
+        create_custom_meta(&manga_path, MangaMeta {
+            connector: format!("MangaDex"),
+            credits: Some(credit),
+            format: format,
+            integration: Integration {
+                anilist,
+                myanimelist,
+            },
+            ..Default::default()
+        })?;
 
         Ok(())
     }

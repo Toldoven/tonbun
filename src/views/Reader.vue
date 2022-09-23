@@ -8,102 +8,73 @@ import Reader from '../components/Reader/Reader.vue'
 import { addFullscreenEventListener } from '../lib/window'
 import { usePrefsStore } from '../stores/prefs'
 import { useReaderStore } from '../stores/reader'
-// import { useMetaStore } from '../stores/meta'
 import { event } from '@tauri-apps/api'
-import { useMetaStore } from '../stores/meta'
 import { message } from '@tauri-apps/api/dialog'
+import { Event } from '@tauri-apps/api/event'
 
 const route = useRoute()
 const reader = useReaderStore()
 const prefs = usePrefsStore()
-const meta = useMetaStore()
-// const meta = useMetaStore()
-
-// import router from "../router"
 
 const webview = getCurrent()
 
 onMounted(async () => {
-
     try {
-
-        // reader.resetChapterData()
 
         addFullscreenEventListener(window, webview)
 
-        event.listen('discord_rich_presence_enabled', () => {
-            reader.updateDiscordRP()
-        })
+        event.listen('discord_rich_presence_enabled', () => reader.updateDiscordRP())
 
-        webview.listen('tauri://close-requested', async () => {
-            try {
-                await Promise.all([
-                    invoke('set_manga_chapter_and_slide_from_state'),
-                    invoke('discord_clear_activity'),
-                ]) 
-            } catch (e) {
-                console.error(e)
-                await message(`Error when trying to close manga: ${e}`);
-            } finally {
-                await webview.hide()
-                await reader.push('/read')
-            }
-        })
+        webview.listen('tauri://close-requested', () => onCloseRequested())
 
-        event.listen('change_reader_url_test', async (e: any) => {
-            try {
+        event.listen<string>('change_reader_url_test', async (e) => onChangeUrl(e))
 
-                // await webview.show()
-                // await webview.setFocus()
+        await prefs.loadPrefs()
 
-                if (route.params.title) {
-                    await Promise.all([
-                        invoke('set_manga_chapter_and_slide_from_state'),
-                        invoke('discord_clear_activity'),
-                    ]) 
-                }
-
-                await reader.push(e.payload)
-
-                // reader.timestamp = Date.now()
-
-                await meta.loadMeta()
-                await reader.getChapterList()
-                await reader.updateChapterData()
-
-                // invoke('message', { message: "hellooooo" })
-
-            } catch (e) {
-
-                console.error(e)
-
-            } finally {
-
-                await webview.show()
-                await webview.setFocus()
-
-                const library = WebviewWindow.getByLabel('library')
-
-                await library.emit('manga_loaded')
-            }
-        })
-
-        await Promise.all([
-            // meta.loadMeta(),
-            // reader.getChapterList(),
-            prefs.loadPrefs(),
-        ])
+        if (route.params.title) await reader.loadMangaByTitle(route.params.title as string)
 
     } catch (e) {
         console.error(e)
-        // invoke('message', { message: e })
     } 
-    
-    // finally {
-    //     webview.show()
-    //     webview.setFocus()
-    // }
 })
+
+const onCloseRequested = async () => {
+    try {
+        reader.updateIntegrationChapter()
+        await Promise.all([
+            reader.setMangaChapterAndSlide(),
+            invoke('discord_clear_activity'),
+        ]) 
+    } catch (e) {
+        console.error(e)
+        await message(`Error when trying to close manga: ${e}`);
+    } finally {
+        await webview.hide()
+        await reader.push('/read')
+    }
+}
+
+const onChangeUrl = async (e: Event<string>) => {
+    try {
+        if (route.params.title) {
+            reader.updateIntegrationChapter()
+            await Promise.all([
+                reader.setMangaChapterAndSlide(),
+                invoke('discord_clear_activity'),
+            ]) 
+        }
+        await reader.push(e.payload)
+        await reader.loadMangaByTitle(route.params.title as string)
+    } catch (e) {
+        console.error(e)
+    } finally {
+        await webview.show()
+        await webview.setFocus()
+
+        const library = WebviewWindow.getByLabel('library')
+        await library.emit('manga_loaded')
+    }
+}
 
 </script>
 
