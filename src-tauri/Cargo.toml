@@ -27,7 +27,6 @@ alphanumeric-sort = "1.4.4"
 ts-rs = { version = "6.1", features = ["uuid-impl"] }
 declarative-discord-rich-presence = { git = "https://github.com/KPidS/declarative-discord-rich-presence" }
 
-
 tauri = { version = "^1.0.5", features = ["api-all", "devtools"] }
 tauri-plugin-persisted-scope = { version = "0.1", features = ["protocol-asset"] }
 tauri-plugin-window-state = { git = "https://github.com/KPidS/tauri-plugin-window-state" }

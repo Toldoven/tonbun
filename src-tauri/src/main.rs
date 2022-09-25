@@ -10,6 +10,7 @@ pub mod connectors;
 pub mod discord;
 pub mod oauth;
 pub mod utils;
+pub mod downloader;
 
 use crate::manga::Format;
 use crate::manga::Manga;
@@ -136,8 +137,8 @@ async fn update_manga_order(order_list: Vec<manga::UuidOrderIndex>, prefs: State
 }
 
 #[tauri::command]
-fn search_title(query: String, lang: String) -> Result<Value, String> {
-    return match MangaDex::search(query, lang) {
+async fn search_title(query: String, lang: String) -> Result<Value, String> {
+    return match MangaDex::search(query, lang).await {
         Ok(result) => Ok(result["data"].clone()),
         Err(_) => Err("No connection".into()),
     }
@@ -148,20 +149,19 @@ async fn download_manga(uuid: String, lang: String, title: String, prefs: State<
   let prefs = prefs.0.lock().await;
   let manga_directory = PathBuf::from(&prefs.manga_directory);
 
-  std::thread::spawn(move || {
-    let result = MangaDex::download_manga(&uuid, &lang, &title, &manga_directory, &window);
-    match result {
-      Ok(_) => println!("Downloaded manga {}", &title),
-      Err(e) => {
-        println!("{:?}", e);
-        window.emit("downloading_error", DownloadingError{
-          uuid,
-          title,
-          message: "Failed downloading manga".to_string(),
-        }).unwrap();
-      },
-    }
-  });
+  let result = MangaDex::download_manga(&uuid, &lang, &title, &manga_directory, &window).await;
+
+  match result {
+    Ok(_) => println!("Downloaded manga {}", &title),
+    Err(e) => {
+      println!("{:?}", e);
+      window.emit("downloading_error", DownloadingError{
+        uuid,
+        title,
+        message: "Failed downloading manga".to_string(),
+      }).unwrap();
+    },
+  }
 
   Ok(())
 }
@@ -177,7 +177,7 @@ async fn update_manga_dir(dir: PathBuf, prefs: State<'_, PrefsStore>, window: ta
   Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn change_reader_url(url: String, app_handle: tauri::AppHandle) {
   let window = app_handle.get_window("reader").unwrap();
   let js = format!("window.location.replace('{}')", url);

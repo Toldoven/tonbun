@@ -8,6 +8,8 @@ import Button from 'primevue/button'
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import InputText from 'primevue/inputtext'
+
 const libraryCards = useLibraryCardsStore();
 const editModal = useEditModalStore();
 
@@ -37,6 +39,11 @@ const { t } = useI18n()
 
     <div v-if="editModal.meta?.credits" class="mb-4">
         <a :href="editModal.meta.credits" target="_blank">{{t('edit.credits', { connector: editModal.meta.connector })}}</a>
+    </div>
+
+    <div class="setting-entry">
+        <p class="mb-2">{{ t('settings.discordRichPresence') }}</p>
+        <InputText class="w-full"></InputText>
     </div>
 
 	<Button

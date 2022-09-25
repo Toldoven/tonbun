@@ -1,8 +1,33 @@
 
-use crate::utils::Result;
-use crate::prefs::Prefs;
+use std::error::Error;
 use reqwest::Client;
 use serde_json::{value::Value, json};
+
+type Result<T> = std::result::Result<T, Box<dyn Error>>;
+
+trait HandleErrors {
+    fn handle_errors(self) -> Result<Value>;
+}
+
+impl HandleErrors for Value {
+    fn handle_errors(self) -> Result<Value> {
+        if let Some(errors) = self.get("errors") {
+            let errors: Vec<&str> = errors
+                .as_array()
+                .ok_or("Errors is not an array")?
+                .iter()
+                .map(|error| -> Option<&str> {
+                    error.get("message")?.as_str()
+                })
+                .map(|error| -> &str {
+                    error.unwrap_or("Unknown error")
+                })
+                .collect();
+            if errors.contains(&"Invalid token") { Err("Invalid token")? } else { Err(errors[0])? }
+        }
+        Ok(self)
+    }
+}
 
 async fn get_progress_and_id(anilist_manga_id: &str, access_token: &str) -> Result<Value> {
     let query: &str = r#"
@@ -82,9 +107,9 @@ async fn update_progress_and_status(id: i64, access_token: &str, progress: i64, 
 
 pub async fn update(anilist_manga_id: &str, access_token: &str, progress: i64) -> Result<Value> {
 
-    let data = get_progress_and_id(anilist_manga_id, access_token).await?;
-
-    handle_request_erorrs(&data)?;
+    let data = get_progress_and_id(anilist_manga_id, access_token)
+        .await?
+        .handle_errors()?;
 
     let (current_progress, id, mut status, chapters) = (|| -> Option<(i64, i64, &str, Option<i64>)> {
         let entry = data
@@ -112,31 +137,12 @@ pub async fn update(anilist_manga_id: &str, access_token: &str, progress: i64) -
         }
     }
 
-    let data = update_progress_and_status(id, access_token, progress, status).await?;
-
-    handle_request_erorrs(&data)?;
+    let data = update_progress_and_status(id, access_token, progress, status)
+        .await?
+        .handle_errors()?;
 
     Ok(data)
 }
-
-fn handle_request_erorrs(data: &Value) -> Result<()> {
-    if let Some(errors) = data.get("errors") {
-        let errors: Vec<&str> = errors
-            .as_array()
-            .ok_or("Errors is not an array")?
-            .into_iter()
-            .map(|error| -> Option<&str> {
-                error.get("message")?.as_str()
-            })
-            .map(|error| -> &str {
-                error.unwrap_or("Unknown error")
-            })
-            .collect();
-        if errors.contains(&"Invalid token") { Err("Invalid token")? } else { Err(errors[0])? }
-    }
-    Ok(())
-}
-
 // #[test]
 // fn test() -> Result<()> {
 //     let prefs = Prefs::load()?;

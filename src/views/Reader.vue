@@ -38,19 +38,17 @@ onMounted(async () => {
     } 
 })
 
-const onCloseRequested = async () => {
+const onCloseRequested = () => {
     try {
         reader.updateIntegrationChapter()
-        await Promise.all([
-            reader.setMangaChapterAndSlide(),
-            invoke('discord_clear_activity'),
-        ]) 
+        reader.setMangaChapterAndSlide()
+        invoke('discord_clear_activity')
     } catch (e) {
         console.error(e)
-        await message(`Error when trying to close manga: ${e}`);
+        message(`Error when trying to close manga: ${e}`);
     } finally {
-        await webview.hide()
-        await reader.push('/read')
+        webview.hide()
+        reader.push('/read')
     }
 }
 
