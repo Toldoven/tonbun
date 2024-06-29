@@ -1,3 +1,6 @@
+> [!CAUTION]
+> This was my first Rust project. The code here is terrible and is not a good representation of my current skills
+
 # Tonbun
 Tonbun is a desktop app for reading and downloading manga. With clean distraction-free design and no clutter. Build with [Rust](https://www.rust-lang.org/), [Tauri](https://tauri.app/), [Vue.js](https://vuejs.org/), and [MangaDex](https://mangadex.org/) API. 
 
