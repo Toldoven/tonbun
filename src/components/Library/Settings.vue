@@ -9,7 +9,7 @@ import { open } from '@tauri-apps/api/dialog'
 
 
 // import Button from 'primevue/button'
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { usePrefsStore } from '../../stores/prefs';
 import { useSettingsModalStore } from '../../stores/settingsModal';
@@ -23,6 +23,7 @@ const libraryCards = useLibraryCardsStore()
 const selectedLanguage = ref<String>('en')
 const discordRichPresence = ref(false)
 const selectedReaderFormat = ref('Slides')
+// const anilistOauth = ref<undefined | String>(undefined)
 
 const languages = [
     {name: 'English', code: 'en'},
@@ -36,10 +37,9 @@ const readerFormats = [
 
 const handleDirectorySelect = async () => {
     try {
-       const dir = await open({ directory: true })
+        const dir = await open({ directory: true })
         if (!dir) return
         await invoke('update_manga_dir', { dir })
-        await prefs.loadPrefs()
         await libraryCards.update()
     } catch (e) {
         console.error(e)
@@ -52,6 +52,8 @@ onMounted(() => {
     selectedReaderFormat.value = prefs.value.reader.default_format
 })
 
+const anilistOauth = computed(() => prefs?.value?.oauth?.anilist?.access_token)
+
 watch(selectedLanguage, (value: string) => prefs.setLang(value))
 watch(discordRichPresence, (value: boolean) => prefs.setDiscordRichPresence(value))
 watch(selectedReaderFormat, (value) => prefs.setReaderFormat(value))
@@ -63,7 +65,7 @@ const { t } = useI18n()
 
 <template>
 
-<Dialog :header="t('settings.settings')" v-model:visible="settingsModal.value" :modal="true" :draggable="false" style="width: 512px">
+<Dialog :header="t('settings.settings')" v-model:visible="settingsModal.value" :modal="true" :draggable="false" style="width: 512px" :dismissableMask="true">
     <div class="setting-entry">
         <p class="mb-2">{{ t('settings.language') }}</p>
         <SelectButton v-model="selectedLanguage" :options="languages" option-label="name" option-value="code"/>
@@ -84,6 +86,20 @@ const { t } = useI18n()
         <!-- <Button @click="invoke('discord_connect')">Connect</Button>
         <Button @click="invoke('discord_close')">Disconnect</Button> -->
         <InputSwitch v-model="discordRichPresence" />
+    </div>
+    <div class="setting-entry">
+        <p class="mb-2">Anilist Ouath</p>
+        <!-- <Button @click="invoke('discord_connect')">Connect</Button>
+        <Button @click="invoke('discord_close')">Disconnect</Button> -->
+        <p>{{ anilistOauth }}</p>
+        <a
+            v-if="!anilistOauth"
+            :href="`https://anilist.co/api/v2/oauth/authorize?client_id=${prefs.value.oauth.anilist.client_id}&response_type=token`"
+            target="_blank"
+        >
+            <Button>Log In</Button>
+        </a>
+        <Button @click="prefs.anilistOauthLogout" v-else>Log Out</Button>
     </div>
 </Dialog>
 

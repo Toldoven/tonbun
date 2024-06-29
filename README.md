@@ -1,3 +1,6 @@
+> [!CAUTION]
+> This was my first Rust project. The code here is terrible and is not a good representation of my current skills
+
 # Tonbun
 Tonbun is a desktop app for reading and downloading manga. With clean distraction-free design and no clutter. Build with [Rust](https://www.rust-lang.org/), [Tauri](https://tauri.app/), [Vue.js](https://vuejs.org/), and [MangaDex](https://mangadex.org/) API. 
 
@@ -31,17 +34,23 @@ The app will remember the chapter and page when you stop reading
 
 ## Planned features:
 
-### v1.0.3
-- Credits for scanlation group from MangaDex.
-- A proper support for long strip format.
-- Integration with Anilist and MyAnimeList to track progress.|
 ### v???
+
+- Integration with Anilist and MyAnimeList to track progress.
+
+### v???
+
+- Improved lonstrip support.
 - More reader settings. The reader is janky right now.
+
 ### v???
+
 - Improved downloader.
 - Download only a part of the chapters, not all.
 - Check for new chapters and download them when they are available.
+
 ### Ideas
+
 - More languages.
 - Folders in the library for a more convenient organization.
 - Read manga without downloading it.

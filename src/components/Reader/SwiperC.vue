@@ -11,6 +11,7 @@ import { Swiper as SwiperClass } from 'swiper/types'
 
 import { useRoute } from 'vue-router'
 import { useReaderStore } from '../../stores/reader'
+import { msg } from '@/lib';
 
 const route = useRoute()
 const reader = useReaderStore()
@@ -31,7 +32,7 @@ const initialSlide = computed(() => {
 })
 
 const currentSlide = (swiperIndex: number) => {
-  if (swiperIndex == Infinity) return reader.chapterData.images.length
+  if (swiperIndex == Infinity) return reader.chapter.images.length
   return swiperIndex + 1
 }
 
@@ -65,6 +66,7 @@ window.addEventListener("keyup", async function(e) {
 })
 
 window.addEventListener("wheel", async function(e) {
+
   const check = ['control-bottom', 'control-top']
   const target = e.target as Element;
   if (!check.includes(target.id)) return
@@ -95,16 +97,17 @@ window.addEventListener("wheel", async function(e) {
       style="height: 50%"/>
   </div>
 
-  <p class="opacity-50 p-card p-component p-2 absolute bottom-0 right-0 m-3 z-3" v-if="reader.chapterData.images.length > 0">
-    {{`${currentSlide(swiper?.activeIndex || 0)} / ${reader.chapterData.images.length}`}}
+  <p class="opacity-50 p-card p-component p-2 absolute bottom-0 right-0 m-3 z-3" v-if="reader.chapter.images.length > 0">
+    {{`${currentSlide(swiper?.activeIndex || 0)} / ${reader.chapter.images.length}`}}
   </p>
 
   <div>
-    
+    <!-- <p>Pepega</p>
+    <p>{{reader.chapter.images}}</p> -->
     <Swiper
       @swiper="setSwiper"
       @active-index-change="handleSlideChange"
-      :key="reader.chapterData.path"
+      :key="reader.chapter.path"
       :initialSlide="initialSlide"
       :slides-per-view="1"
       :space-between="12"
@@ -112,11 +115,11 @@ window.addEventListener("wheel", async function(e) {
       direction="vertical"
       :observer="true"      
       :speed="300"
-      v-show="!reader.loadingChapter"
+      :v-show="!reader.loadingChapter"
     >
-      <SwiperSlide v-for="image in reader.chapterData.images" :key="`${reader.chapterData.path}/${image}`">
+      <SwiperSlide v-for="image in reader.chapter.images">
         <div class="swiper-zoom-container">
-          <Image class="w-full h-screen" :key="`${reader.chapterData.path}/${image}`" :localImage="`${reader.chapterData.path}/${image}`"/>
+          <Image class="w-full h-screen" :key="`${reader.chapter.path}/${image}`" :localImage="`${reader.chapter.path}/${image}`"/>
         </div>
       </SwiperSlide>
     </Swiper>

@@ -1,12 +1,13 @@
 {
   "name": "tonbun",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "ts-rs": "(cd src-tauri && cargo test && cd -)" 
   },
   "dependencies": {
     "@tauri-apps/api": "^1.0.0-rc.5",

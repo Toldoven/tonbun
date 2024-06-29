@@ -1,17 +1,17 @@
 <script setup lang="ts">
 
+import { useReaderStore } from '@/stores/reader';
 import SelectButton from 'primevue/selectbutton'
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useMetaStore } from '../../stores/meta';
 import { useReaderSettingsStore } from '../../stores/readerSettings';
 
 const settings = useReaderSettingsStore()
 
-const meta = useMetaStore()
+const reader = useReaderStore()
 
-watch(meta, () => {
-    settings.format = meta.value.format
+watch(reader, () => {
+    settings.format = reader.manga.meta.format
 }, { immediate: true })
 
 const updateFormat = (e) => {

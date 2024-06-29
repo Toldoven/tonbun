@@ -5,12 +5,12 @@ import Reader from '../views/Reader.vue'
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'Library',
-    component: Library
+    // name: 'Library',
+    component: Library,
   },
   {
-    path: '/read/',
-    name: 'Reader',
+    path: '/read',
+    // name: 'Reader',
     component: Reader,
   },
   {

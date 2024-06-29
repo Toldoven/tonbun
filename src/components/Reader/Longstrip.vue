@@ -11,7 +11,7 @@ const reader = useReaderStore()
 <template>
 
 <div class="longstip">
-    <Image v-for="image in reader.chapterData.images" :key="`${reader.chapterData.path}/${image}`" :localImage="`${reader.chapterData.path}/${image}`"/>
+    <Image v-for="image in reader.chapter.images" :key="`${reader.chapter.path}/${image}`" :localImage="`${reader.chapter.path}/${image}`"/>
 </div>
 
 

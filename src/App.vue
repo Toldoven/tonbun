@@ -5,10 +5,12 @@ import Toast from 'primevue/toast'
 import { usePrefsStore } from './stores/prefs';
 import { onBeforeMount, onMounted, watch } from 'vue';
 import { invoke } from '@tauri-apps/api';
+import { useRoute } from 'vue-router';
 
 const { t, locale } = useI18n();
 
 const prefs = usePrefsStore()
+const route = useRoute();
 
 watch(prefs, () => { if (prefs.value.lang) locale.value = prefs.value.lang })
 
@@ -16,6 +18,7 @@ watch(prefs, () => { if (prefs.value.lang) locale.value = prefs.value.lang })
 
 <template>
   <Toast/>
+  <!-- <p>{{route}}</p> -->
   <router-view/>
 </template>
 
@@ -65,5 +68,33 @@ a {
   text-decoration: none;
   font-weight: 500;
 }
+
+// input::placeholder {
+//   user-select: none;
+//   -webkit-user-select: none;
+//   pointer-events: none !important;
+//   -webkit-pointer-events: none !important;
+// }
+
+// ::placeholder, input::placeholder {
+//   pointer-events: none !important;
+//   -webkit-pointer-events: none !important;
+//   -moz-pointer-events: none;
+//   -ms-pointer-events: none;
+// }
+
+// input div[pseudo] {
+//   pointer-events: none;
+//   -webkit-pointer-events: none;
+//   -moz-pointer-events: none;
+//   -ms-pointer-events: none;
+// }
+
+// i {
+//   pointer-events: none;
+//   -webkit-pointer-events: none;
+//   -moz-pointer-events: none;
+//   -ms-pointer-events: none;
+// }
 
 </style>

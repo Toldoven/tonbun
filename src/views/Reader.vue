@@ -1,85 +1,83 @@
 <script setup lang="ts">
 
 import { invoke } from '@tauri-apps/api'
-import { getCurrent } from '@tauri-apps/api/window'
+import { getCurrent, WebviewWindow } from '@tauri-apps/api/window'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Reader from '../components/Reader/Reader.vue'
-import { addFullscreenEventListener, loadWindowPrefs, saveWindowPrefs } from '../lib/window'
+import { addFullscreenEventListener } from '../lib/window'
 import { usePrefsStore } from '../stores/prefs'
 import { useReaderStore } from '../stores/reader'
-import { useMetaStore } from '../stores/meta'
 import { event } from '@tauri-apps/api'
+import { message } from '@tauri-apps/api/dialog'
+import { Event } from '@tauri-apps/api/event'
 
 const route = useRoute()
 const reader = useReaderStore()
 const prefs = usePrefsStore()
-const meta = useMetaStore()
-
-// import router from "../router"
 
 const webview = getCurrent()
 
 onMounted(async () => {
     try {
 
-        reader.resetChapterData()
-
         addFullscreenEventListener(window, webview)
 
-        event.listen('discord_rich_presence_enabled', () => {
-            reader.updateDiscordRP()
-        })
+        event.listen('discord_rich_presence_enabled', () => reader.updateDiscordRP())
 
-        event.once('tauri://close-requested', async () => {
-            await Promise.all([
-                invoke('set_manga_chapter_and_slide_by_title', {
-                    title: route.params.title,
-                    chapter: route.params.chapter,
-                    slide: parseInt(route.params.slide as string)
-                }),
-                invoke('discord_clear_activity'),
-                saveWindowPrefs(webview)
-            ])
-            webview.close()
-        })
+        webview.listen('tauri://close-requested', () => onCloseRequested())
 
-        event.listen('change_reader_url_test', async (e: any) => {
-            await webview.hide()
+        event.listen<string>('change_reader_url_test', async (e) => onChangeUrl(e))
 
-            await invoke('set_manga_chapter_and_slide_by_title', {
-                title: route.params.title,
-                chapter: route.params.chapter,
-                slide: parseInt(route.params.slide as string)
-            }),
-            await saveWindowPrefs(webview)
+        await prefs.loadPrefs()
 
-            await reader.push(e.payload)
-            await reader.getChapterList()
-
-            await webview.show()
-            await webview.setFocus()
-        })
-
-        await Promise.all([
-            meta.loadMeta(),
-            reader.getChapterList(),
-            prefs.loadPrefs(),
-        ])
+        if (route.params.title) await reader.loadMangaByTitle(route.params.title as string)
 
     } catch (e) {
         console.error(e)
-        // invoke('message', { message: e })
-    } finally {
-        webview.show()
-        webview.setFocus()
-    }
+    } 
 })
+
+const onCloseRequested = () => {
+    try {
+        reader.updateIntegrationChapter()
+        reader.setMangaChapterAndSlide()
+        invoke('discord_clear_activity')
+    } catch (e) {
+        console.error(e)
+        message(`Error when trying to close manga: ${e}`);
+    } finally {
+        webview.hide()
+        reader.push('/read')
+    }
+}
+
+const onChangeUrl = async (e: Event<string>) => {
+    try {
+        if (route.params.title) {
+            reader.updateIntegrationChapter()
+            await Promise.all([
+                reader.setMangaChapterAndSlide(),
+                invoke('discord_clear_activity'),
+            ]) 
+        }
+        await reader.push(e.payload)
+        await reader.loadMangaByTitle(route.params.title as string)
+    } catch (e) {
+        console.error(e)
+    } finally {
+        await webview.show()
+        await webview.setFocus()
+
+        const library = WebviewWindow.getByLabel('library')
+        await library.emit('manga_loaded')
+    }
+}
 
 </script>
 
 <template>
 
-<Reader :key="route.params.title as string"/>
+<Reader v-if="route.params.title" key="route.params.title"/>
 
 </template>

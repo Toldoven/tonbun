@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
-import { appWindow, getCurrent } from '@tauri-apps/api/window';
-import { onMounted, ref, watch} from 'vue';
+import { getCurrent } from '@tauri-apps/api/window';
+import { computed, onMounted, ref, watch} from 'vue';
 import { useReaderStore } from '../../stores/reader'
 import Chapter from './Chapter.vue'
 
@@ -9,6 +9,7 @@ import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
 import OverlayPanel from 'primevue/overlaypanel'
 import Menu from './Menu.vue';
+import { fileName } from '@/lib';
 
 const reader = useReaderStore()
 
@@ -43,6 +44,7 @@ onMounted(async () => {
     })
 
     fullscreen.value = await webview.isFullscreen()
+
 })
 
 const fullscreen = ref(false)
@@ -50,14 +52,19 @@ const fullscreen = ref(false)
 const removeFocus = () => (document.activeElement as HTMLElement).blur()
 
 const toggleFullscreen = () => {
+    removeFocus()
     fullscreen.value = !fullscreen.value
     webview.setFullscreen(fullscreen.value)
-    removeFocus()
 }
 
 const toggleMenu = (event) => {
-    menu.value.toggle(event)
     removeFocus()
+    menu.value.toggle(event)
+}
+
+const closeWindow = () => {
+  removeFocus()
+  webview.emit('tauri://close-requested')
 }
 
 watch(isDropdownShown, () => removeFocus())
@@ -67,8 +74,8 @@ watch(isDropdownShown, () => removeFocus())
 
 <template>
 
-<div :class="`mouse-move fixed flex gap-2 flex-row-reverse z-3 right-0 m-3 ${!visible ? `hidden` : ''}`">
-  <Button @click="webview.emit('tauri://close-requested')" tab-v-if="fullscreen" icon="pi" class="p-button-plain p-button-rounded p-button-text">
+<div :class="`reader-buttons mouse-move fixed flex gap-2 flex-row-reverse z-3 right-0 m-3 ${!visible ? `hidden` : ''}`">
+  <Button @click="closeWindow" tab-v-if="fullscreen" icon="pi" class="p-button-plain p-button-rounded p-button-text">
       <span class="material-symbols-outlined">close</span>
   </Button>
   <Button @click="toggleFullscreen" icon="pi" class="p-button-plain p-button-rounded p-button-text" :tabindex="-1">
@@ -96,12 +103,16 @@ watch(isDropdownShown, () => removeFocus())
   ></Dropdown>
 </div>
 
-<Chapter/>
+<Chapter />
 
 </template>
 
 
 <style lang="scss">
+
+.reader-buttons {
+  mix-blend-mode: difference !important;
+}
 
 .pi-cog {
   font-size: 1.5rem !important;

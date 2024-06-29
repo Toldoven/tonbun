@@ -1,6 +1,5 @@
-import {invoke} from '@tauri-apps/api/tauri'
-import {LogicalSize, WindowManager} from '@tauri-apps/api/window'
-
+// import {invoke} from '@tauri-apps/api/tauri'
+import { WindowManager } from '@tauri-apps/api/window'
 
 export const addFullscreenEventListener = (window: Window, webview: WindowManager) => {
     window.addEventListener("keyup", async (e) => {
@@ -9,30 +8,32 @@ export const addFullscreenEventListener = (window: Window, webview: WindowManage
     })
 }
 
-export const loadWindowPrefs = async (webview: WindowManager, prefs) => {
-    try {
-        let windowPrefs = prefs['windows'][webview.label.toLowerCase()]
-        await Promise.all([
-            webview.setSize(new LogicalSize(windowPrefs.x, windowPrefs.y)),
-            webview.setFullscreen(windowPrefs.fullscreen)
-        ])
-    } catch (e) {
-        console.error(e)
-    }
-}
+// export const errorToast
 
-export const saveWindowPrefs = async (webview: WindowManager) => {
+// export const loadWindowPrefs = async (webview: WindowManager, prefs) => {
+//     try {
+//         let windowPrefs = prefs['windows'][webview.label.toLowerCase()]
+//         await Promise.all([
+//             webview.setSize(new LogicalSize(windowPrefs.x, windowPrefs.y)),
+//             webview.setFullscreen(windowPrefs.fullscreen)
+//         ])
+//     } catch (e) {
+//         console.error(e)
+//     }
+// }
 
-    const size = await webview.innerSize()
+// export const saveWindowPrefs = async (webview: WindowManager) => {
 
-    await invoke('set_window_prefs', {
-        label: webview.label.toLowerCase(),
-        window: {
-            fullscreen: await webview.isFullscreen(),
-            x: size.width,
-            y: size.height,
-        }
-    })
+//     const size = await webview.innerSize()
 
-}
+//     await invoke('set_window_prefs', {
+//         label: webview.label.toLowerCase(),
+//         window: {
+//             fullscreen: await webview.isFullscreen(),
+//             x: size.width,
+//             y: size.height,
+//         }
+//     })
+
+// }
 

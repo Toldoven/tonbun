@@ -1,4 +1,8 @@
+import { fileName, msg } from "@/lib"
+import { Manga } from "@rs-ts/Manga"
+import { MangaMeta } from "@rs-ts/MangaMeta"
 import { invoke } from "@tauri-apps/api"
+import { listen } from "@tauri-apps/api/event"
 import { getCurrent, WindowManager } from "@tauri-apps/api/window"
 import { defineStore } from "pinia"
 import { computed, ref, watch } from "vue"
@@ -9,25 +13,47 @@ const webview: WindowManager = getCurrent()
 
 export const useReaderStore = defineStore('reader', () => {
 
-    const loadingChapter = ref(true)
+    const loadingChapter = ref(false)
 
     const route = useRoute()
 
-    const timestamp = ref(Date.now())
+    const mangaTimestamp = ref(Date.now())
 
     // Chapter List
 
-    const chapterList = ref<string[]>([])
+    const manga = ref<Manga>()
 
-    const getChapterList = async () => {
-        chapterList.value = await invoke('get_chapter_list_by_title', { title: route.params.title })
-        chapterList.value.push()
-        if (route.params.chapter === '0') router.push({
-          path: `/read/${route.params.title}/${chapterList.value[0]}/0`
-        })
+    const chapterList = computed(() => getChapterList())
+
+    const getChapterList = () => manga?.value?.chapters.map((chapter) => fileName(chapter.path))
+
+    const chapter = computed((value) => {
+        return manga?.value?.chapters.find((chapter) =>
+            fileName(chapter.path) === route?.params?.chapter
+        )
+    })
+
+    const loadMangaByTitle = async (title: string) => {
+
+        mangaTimestamp.value = Date.now()
+
+        manga.value = await invoke<Manga>('get_manga_by_title', { title })
+
+        if (!route?.params?.chapter) return
+
+        const chapterList = getChapterList()
+        if (route.params.chapter === '0') setChapter(chapterList[0])
+        if (!chapter.value) setChapter(chapterList[0])
     }
 
-    // Change chapters
+    watch(chapter, () => {
+        updateTitle()
+        updateDiscordRP()
+    })
+
+    listen<MangaMeta>('update_meta', (e) => manga.value.meta = e.payload)
+
+    //
 
     const indexOfChapter = () => chapterList.value.findIndex((chapter) => chapter === route.params.chapter)
 
@@ -45,65 +71,65 @@ export const useReaderStore = defineStore('reader', () => {
         router.push(`/read/${route.params.title}/${prevChapter}/-1`)
     }
 
-    // Title
+    //
 
     const updateTitle = async () => {
         webview.setTitle(`${route.params.title} - ${route.params.chapter}`)
     }      
 
-    // Chapter Data 
+    const updateDiscordRP = async () => {
 
-    const chapterDataDefault = {
-        path: '',
-        images: [],
-    }
+        if (!route.params.title || !route.params.chapter) return
 
-    const chapterData = ref(chapterDataDefault)
-
-    const resetChapterData = () => {
-        chapterData.value = chapterDataDefault
-    }
-
-    const updateChapterData = async () => {
-
-        if (['-1', '0'].includes(route.params.chapter as string)) return
-
-        loadingChapter.value = true
-
-        chapterData.value = await invoke('get_chapter_by_title', {
-            title: route.params.title,
-            chapter: route.params.chapter
-        })
-
-        updateTitle()
-        updateDiscordRP()
-
-        loadingChapter.value = false
-    }
-
-    const updateDiscordRP = () => {
-        invoke('discord_set_activity', {
+        await invoke('discord_set_activity', {
             details: "Reading manga",
             state: `${route.params.title} - ${route.params.chapter}`,
-            timestamp: timestamp.value,
+            timestamp: mangaTimestamp.value,
             image: "logo",
         })
     }
 
-    const currentChapter = computed(() => route.params.chapter)
-    
-    watch(currentChapter, async (value, oldValue) => {
-        if (value === oldValue) return
-        updateChapterData()
+    watch(route, async() => {
+
+        if (!route.params.title || !route.params.chapter) return
+
+        invoke('set_reader_state', {
+            title: route.params.title as string || "",
+            chapter: route.params.chapter as string || "0",
+            slide: parseInt(route.params.slide as string) || 0,
+        })
+
     }, { immediate: true })
 
-    // Slider 
+    const setMangaChapterAndSlide = async () => {
+        await invoke('set_manga_chapter_and_slide_by_title', {
+            title: route.params.title as string || "",
+            chapter: route.params.chapter as string || "0",
+            slide: parseInt(route.params.slide as string) || 0
+        })
+    }
+
+    const updateIntegrationChapter = async () => {
+        let anilistMangaId = manga?.value?.meta?.integration?.anilist
+        let progress = indexOfChapter()
+        
+        if (!anilistMangaId && progress >= 0) return 
+
+        await invoke('anilist_update_manga', {
+            anilistMangaId,
+            progress: progress + 1,
+        })
+    }
+
+    // 
 
     const changeSlideRoute = (slide: Number) => {
+        // msg(slide)
         router.push(`/read/${route.params.title}/${route.params.chapter}/${slide}`)
     }
 
     const setChapter = (chapter: String) => {
+        console.log(chapter)
         router.push(`/read/${route.params.title}/${chapter}/0`)
     }
 
@@ -111,7 +137,7 @@ export const useReaderStore = defineStore('reader', () => {
         await router.push(url)
     }
 
-    // Return
+    //
 
-    return { chapterList, loadingChapter, getChapterList, updateChapterData, resetChapterData, nextChapter, prevChapter, chapterData, changeSlideRoute, setChapter, updateDiscordRP, push }
+    return { updateIntegrationChapter, setMangaChapterAndSlide, nextChapter, prevChapter, manga, chapter, chapterList, loadMangaByTitle, loadingChapter, changeSlideRoute, setChapter, updateDiscordRP, push, mangaTimestamp }
 })

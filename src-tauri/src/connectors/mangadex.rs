@@ -1,14 +1,16 @@
-use downloader::{Download, Downloader};
-use reqwest::blocking::{Client};
+// use downloader::{Download, Downloader};
+use downloader::Download;
+use reqwest::Client;
 use reqwest::Url;
 use serde_json::Value;
+use ts_rs::TS;
 
-use std::error::Error;
+use crate::utils::Result;
+
 use std::fs::{create_dir_all};
 use std::path::{PathBuf, Path};
 use serde::{Serialize, Deserialize};
-use crate::manga::{ MangaMeta, create_custom_meta, Format };
-use crate::prefs::manga_dir;
+use crate::manga::{ MangaMeta, create_custom_meta, Format, Integration };
 // use uuid::{uuid, Uuid};
 
 use uuid::{Uuid};
@@ -16,13 +18,14 @@ use uuid::{Uuid};
 // use self::self::;
 // use crate::manga::create_custom_meta;
 
-use tauri::window::Window;
+use tauri::window::Window;  
 
+const API_URL: &'static str = "https://api.mangadex.org";
 
 struct DownloadChapter {
     uuid: String,
     chapter: String,
-    index: usize,
+    _index: usize,
     volume: String,
 }
 
@@ -31,7 +34,7 @@ impl DownloadChapter {
         DownloadChapter {
             uuid: uuid.to_string(),
             chapter: chapter.to_string(),
-            index,
+            _index: index,
             volume: volume.to_string(),
         }
     }
@@ -51,14 +54,15 @@ impl DownloadChapters {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(export)]
 struct UpdateProgressPayload {
     uuid: String,
     progress: usize,
 }
 
 impl UpdateProgressPayload {
-    fn new(uuid: String, progress: usize) -> UpdateProgressPayload {
+    fn _new(uuid: String, progress: usize) -> UpdateProgressPayload {
         UpdateProgressPayload {
             uuid: uuid.to_string(),
             progress,
@@ -66,7 +70,8 @@ impl UpdateProgressPayload {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(export)]
 struct StartDownloadingPayload {
     uuid: String,
     out_of: usize,
@@ -84,19 +89,15 @@ impl StartDownloadingPayload {
 pub struct MangaDex {}
 
 impl MangaDex {
-
-    fn api_url() -> Url {
-        Url::parse("https://api.mangadex.org/").unwrap()
-    }
-
+    
     fn client() -> Client { Client::new() }
 
-    pub fn search(query: String, lang: String) -> Result<Value, Box<dyn Error>> {
+    pub async fn search(query: String, lang: String) -> Result<Value> {
 
-        let client = MangaDex::client();
+        let mut url = Url::parse(
+            format!("{API_URL}/manga").as_str()
+        )?;
 
-        let mut url: Url = MangaDex::api_url();
-        url.set_path("manga");
         url.query_pairs_mut()
             .append_pair("title", query.as_str())
             .append_pair("includes[]", "cover_art")
@@ -105,12 +106,7 @@ impl MangaDex {
             .append_pair("limit", "20")
             .append_pair("hasAvailableChapters", "true");
         
-        let resp = client
-            .get(url).send()?
-            .json::<Value>()?;
-
-        Ok(resp)
-
+        Ok(Self::fetch(url).await?)
     }
 
     fn get_chapter_name(chapter: &DownloadChapter, repeats: bool) -> String {
@@ -119,9 +115,7 @@ impl MangaDex {
         format!("Chapter {}", chapter.chapter)
     }
 
-    fn download_chapter(manga_uuid: &str, chapter: DownloadChapter, repeats: bool, path: &PathBuf, window: &Window) -> Result<(), Box<dyn Error>> {
-
-        // let uuid = chapter.uuid.clone();
+    async fn download_chapter(_manga_uuid: &str, chapter: DownloadChapter, repeats: bool, path: &PathBuf, _window: &Window) -> Result<()> {
 
         let mut path = PathBuf::from(&path);
 
@@ -130,34 +124,47 @@ impl MangaDex {
 
         create_dir_all(&path)?;
 
-        let at_home_data = MangaDex::get_chapter_athome_data(chapter.uuid.as_str())?;
-        
-        let base_url = at_home_data["baseUrl"].as_str().ok_or("Err")?;
-        let hash = at_home_data["chapter"]["hash"].as_str().ok_or("Err")?;
-        let data = at_home_data["chapter"]["data"].as_array().ok_or("Err")?;
+        let at_home_data = MangaDex::get_chapter_athome_data(chapter.uuid.as_str()).await?;
 
-        let downloads: Vec<Download> = data.iter().enumerate().map(|(index, image)| {
-            let extension = image.as_str().unwrap().split(".").last().unwrap();
-            let download = Download::new(format!("{}/data/{}/{}", &base_url, &hash, image.as_str().unwrap()).as_str());
+        let (base_url, hash, data) = (|| -> Option<(&str, &str, Vec<&str>)> {
+            Some((
+                at_home_data.get("baseUrl")?.as_str()?,
+                at_home_data.get("chapter")?.get("hash")?.as_str()?,
+                at_home_data.get("chapter")?
+                    .get("data")?
+                    .as_array()?
+                    .iter()
+                    .filter_map(|value| { value.as_str() })
+                    .collect()
+            ))
+        })().ok_or("Failed to parse at_home_data")?;
+
+        let _downloads: Vec<Download> = data.iter().enumerate().map(|(index, image)| {
+            let extension = image.split(".").last().unwrap();
+            let download = Download::new(format!("{}/data/{}/{}", &base_url, &hash, image).as_str());
             let download = download.file_name(Path::new(format!("./{}.{}", index.to_string(), extension).as_str()));
             download
         }).collect();
-        
-        let mut downloader = Downloader::builder()
-            .download_folder(&path.as_path())
-            .build()?;
 
-        downloader.download(&downloads)?;
-
-        window.emit(
-            "update_download_progress", 
-            UpdateProgressPayload::new(manga_uuid.to_string(), 
-            chapter.index))?;
+        // println!("{:?}", downloads);
 
         Ok(())
+        
+        // let mut downloader = Downloader::builder()
+        //     .download_folder(&path.as_path())
+        //     .build()?;
+
+        // downloader.download(&downloads)?;
+
+        // window.emit(
+        //     "update_download_progress", 
+        //     UpdateProgressPayload::new(manga_uuid.to_string(), 
+        //     chapter.index))?;
+
+        // Ok(())
     }
 
-    fn download_cover(manga: &Value, path: &PathBuf) -> Result<(), Box<dyn Error>>{
+    async fn download_cover(manga: &Value, path: &PathBuf) -> Result<()>{
 
         let cover_art = manga["data"]["relationships"]
             .as_array()
@@ -174,7 +181,11 @@ impl MangaDex {
         url.set_path(format!("covers/{}/{}", manga_uuid, file_name).as_str());
 
         let client = MangaDex::client();
-        let image_bytes = client.get(url).send()?.bytes()?;
+        let image_bytes = client.get(url)
+            .send()
+            .await?
+            .bytes()
+            .await?;
 
         let image = image::load_from_memory(&image_bytes)?;
 
@@ -187,7 +198,9 @@ impl MangaDex {
         Ok(())
     }
 
-    fn create_meta(manga: &Value, manga_path: &PathBuf) -> Result<(), Box<dyn Error>> {
+
+
+    fn create_meta(manga: &Value, manga_path: &PathBuf) -> Result<()> {
 
         let uuid = manga["data"]["id"].as_str().ok_or("Err")?;
         let uuid = Uuid::parse_str(uuid)?;
@@ -202,14 +215,32 @@ impl MangaDex {
         
         let format = if tag.is_some() { Format::Longstrip } else { Format::Default };
 
-        create_custom_meta(&manga_path, MangaMeta::new(
-            uuid, "MangaDex", -1, "0", 0, vec![], format, Some(credit)
-        ))?;
+        let links = (|| -> Option<&Value>{
+            manga.get("data")?.get("attributes")?.get("links")
+        })().ok_or("Failed to parse links")?;
+
+        let get_link = |link: &str| -> Option<String> {
+            Some(links.get(link)?.as_str()?.to_string())
+        };
+
+        let anilist = get_link("al");
+        let myanimelist = get_link("mal");
+
+        create_custom_meta(&manga_path, MangaMeta {
+            connector: format!("MangaDex"),
+            credits: Some(credit),
+            format: format,
+            integration: Integration {
+                anilist,
+                myanimelist,
+            },
+            ..Default::default()
+        })?;
 
         Ok(())
     }
 
-    fn volumes_to_chapters(volumes: &Value) -> Result<DownloadChapters, Box<dyn Error>> {
+    fn volumes_to_chapters(volumes: &Value) -> Result<DownloadChapters> {
 
         let mut chapters: Vec<DownloadChapter> = vec![];
 
@@ -250,12 +281,12 @@ impl MangaDex {
         Ok(DownloadChapters::new(chapters, repeats))
     }
 
-    pub fn download_manga(manga_uuid: &str, lang: &str, title: &str, window: &Window) -> Result<(), Box<dyn Error>> {
+    pub async fn download_manga(manga_uuid: &str, lang: &str, title: &str, path: &PathBuf, window: &Window) -> Result<()> {
 
-        let chapters_data = MangaDex::aggregate_manga_chapters(&manga_uuid, lang)?;
+        let chapters_data = MangaDex::aggregate_manga_chapters(&manga_uuid, lang).await?;
         let download_manga = MangaDex::volumes_to_chapters(&chapters_data["volumes"])?;
 
-        let mut path = manga_dir();
+        let mut path = PathBuf::from(path);
         path.push(&title.replace("/", "|"));
 
         let mut index: i32 = 2;
@@ -265,8 +296,8 @@ impl MangaDex {
         }
         create_dir_all(&path)?;
 
-        let manga = MangaDex::get_manga(&manga_uuid)?;
-        MangaDex::download_cover(&manga, &path)?;
+        let manga = MangaDex::get_manga(&manga_uuid).await?;
+        MangaDex::download_cover(&manga, &path).await?;
 
         MangaDex::create_meta(&manga, &path)?;
         
@@ -274,57 +305,54 @@ impl MangaDex {
         window.emit("start_downloading", payload)?;
 
         for chapter in download_manga.chapters {
-            MangaDex::download_chapter(manga_uuid, chapter, download_manga.repeats, &path, &window)?;
+            MangaDex::download_chapter(manga_uuid, chapter, download_manga.repeats, &path, &window).await?;
         }
 
         Ok(())
 
     }
 
-    fn aggregate_manga_chapters(manga_uuid: &str, lang: &str) -> Result<Value, Box<dyn Error>> {
+    async fn aggregate_manga_chapters(manga_uuid: &str, lang: &str) -> Result<Value> {
+        let mut url = Url::parse(
+            format!("{API_URL}/manga/{manga_uuid}/aggregate").as_str()
+        )?;
 
-        let client = MangaDex::client();
-
-        let mut url: Url = MangaDex::api_url();
-        url.set_path(format!("manga/{}/aggregate", manga_uuid).as_str());
         url.query_pairs_mut()
             .append_pair("translatedLanguage[]", lang);
 
-        let resp = client
-            .get(url).send()?
-            .json::<Value>()?;
-
-        Ok(resp)
-
+        Ok(Self::fetch(url).await?)
     }
 
-    fn get_manga(manga_uuid: &str) -> Result<Value, Box<dyn Error>> {
+    async fn get_manga(manga_uuid: &str) -> Result<Value> {
+        let mut url = Url::parse(
+            format!("{API_URL}/manga/{manga_uuid}").as_str()
+        )?;
 
-        let client = MangaDex::client();
-
-        let mut url: Url = MangaDex::api_url();
-        url.set_path(format!("manga/{}", manga_uuid).as_str());
         url.query_pairs_mut()
             .append_pair("includes[]", "cover_art");
 
-        let resp = client
-            .get(url).send()?
-            .json::<Value>()?;
-
-        Ok(resp)
-
+        Ok(Self::fetch(url).await?)
     }
 
-    fn get_chapter_athome_data(chapter_uuid: &str) -> Result<Value, Box<dyn Error>> {
+    async fn get_chapter_athome_data(chapter_uuid: &str) -> Result<Value> {
+        let url = Url::parse(
+            format!("{API_URL}/at-home/server/{chapter_uuid}").as_str()
+        )?;
+
+        Ok(Self::fetch(url).await?)
+    }
+
+
+    async fn fetch(url: Url) -> Result<Value> {
 
         let client = MangaDex::client();
 
-        let mut url: Url = MangaDex::api_url();
-        url.set_path(format!("/at-home/server/{}", chapter_uuid).as_str());
-
         let resp = client
-            .get(url).send()?
-            .json::<Value>()?;
+            .get(url)
+            .send()
+            .await?
+            .json()
+            .await?;
 
         Ok(resp)
 

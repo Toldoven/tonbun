@@ -11,6 +11,9 @@ import { useLibraryCardsStore } from '../../../stores/libraryCards'
 import { useEditModalStore } from '../../../stores/editModal'
 import { useI18n } from 'vue-i18n'
 import { usePrefsStore } from '../../../stores/prefs'
+import { event } from '@tauri-apps/api'
+import { message } from '@tauri-apps/api/dialog'
+import { MangaMeta } from '@rs-ts/MangaMeta'
 
 const libraryCards = useLibraryCardsStore();
 const editModal = useEditModalStore();
@@ -34,21 +37,17 @@ const props = defineProps({
 
 const cover = convertFileSrc(props.localCover)
 
-const loading = ref(false)
-
-// const cWebview = appWindow
-
-// onMounted(() => {
-//   cWebview.listen('change_url', (event: any) => console.log(event.payload))
-// })
 
 const handleRead = async () => {
   try {
 
-    loading.value = true
-    setTimeout(() => loading.value = false, 500)
+    libraryCards.loading = true
+    // setTimeout(() => loading.value = false, 500)
+    event.once("manga_loaded", () => libraryCards.loading = false)
 
-    const meta: any = await invoke('get_manga_meta_by_title', { title: props.title })
+    // await new Promise(r => setTimeout(r, 2000));
+
+    const meta = await invoke<MangaMeta>('get_manga_meta_by_title', { title: props.title })
     const url = `/read/${props.title}/${meta.chapter}/${meta.slide}`
 
     let webview = WebviewWindow.getByLabel('reader')
@@ -60,20 +59,19 @@ const handleRead = async () => {
         url,
         visible: false,
         title: props.title,
-        fullscreen: prefs.value.windows.reader.fullscreen,
-        width: prefs.value.windows.reader.x,
-        height: prefs.value.windows.reader.y,
       } )
     }
 
   } catch (e) {
     console.error(e)
+    libraryCards.loading = false
+    await message(`Error when trying to open manga: ${e}`);
   }
 }
 
 const handleEdit = async () => {
   editModal.value = true
-  editModal.manga = <any>{
+  editModal.manga = {
     uuid: props.uuid,
     title: props.title,
   }
@@ -90,7 +88,7 @@ const { t } = useI18n()
       <h4>{{ title }}</h4>
       <p class="mt-2" v-if="libraryCards.downloading[uuid]">Downloading {{libraryCards.downloading[uuid].chapter}}/{{libraryCards.downloading[uuid].outOf}}</p>
       <div class="mt-3 flex gap-2">
-        <Button :loading="loading" :label="t('read')" @click="handleRead"></Button>
+        <Button :loading="libraryCards.loading" :label="t('read')" @click="handleRead"></Button>
         <Button @click="handleEdit" icon="pi pi-pencil" class="p-button-rounded p-button-text"/>
       </div>
     </div>

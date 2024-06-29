@@ -3,40 +3,36 @@ name = "app"
 version = "0.1.0"
 description = "A Manga reader app made with Tauri"
 authors = ["KPidS"]
-license = ""
-repository = ""
+license = "GPL-3.0"
+repository = "https://github.com/KPidS/tonbun"
 default-run = "app"
 edition = "2021"
 rust-version = "1.57"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
 tauri-build = { version = "1.0.4", features = [] }
 
 [dependencies]
 downloader = "0.2.6"
-# image = "0.24.2"
 tokio = { version = "1", features = ["full"] }
-# futures = "0.3"
 toml = "0.5.9"
-# cached = { version = "0.34.0", features = ["default"] }
-# select = "0.5.0"
 scraper = "0.13.0"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
-# crossbeam-channel = "0.4.0"
-# notify = "5.0.0-pre.15"
-# glob = "0.3.0"
 directories = "4.0.1"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "^1.0.5", features = ["api-all"] }
-tauri-plugin-persisted-scope = { version = "0.1", features = ["protocol-asset"] }
-#tauri-plugin-window-state = "0.1"
+queryst = "2.1.0"
 image = "0.24.3"
 alphanumeric-sort = "1.4.4"
-# discord-rich-presence = "0.2.2"
+ts-rs = { version = "6.1", features = ["uuid-impl"] }
 declarative-discord-rich-presence = { git = "https://github.com/KPidS/declarative-discord-rich-presence" }
+
+tauri = { version = "^1.0.5", features = ["api-all", "devtools"] }
+tauri-plugin-persisted-scope = { version = "0.1", features = ["protocol-asset"] }
+tauri-plugin-window-state = { git = "https://github.com/KPidS/tauri-plugin-window-state" }
+tauri-plugin-deep-link = { git = "https://github.com/FabianLars/tauri-plugin-deep-link" }
+
+uuid = { version = "1.1.2", features = ["v4", "fast-rng", "serde", "macro-diagnostics"] }
 
 # [patch.crates-io]
 # discord-rich-presence = { git = "https://github.com/KPidS/declarative-discord-rich-presenc" }
@@ -45,20 +41,6 @@ declarative-discord-rich-presence = { git = "https://github.com/KPidS/declarativ
 # git = "https://github.com/tauri-apps/tauri-plugin-fs-watch"
 # tag = "v0.1.0"
 
-[dependencies.uuid]
-version = "1.0.0"
-features = [
-    "v4",                # Lets you generate random UUIDs
-    "fast-rng",          # Use a faster (but still sufficiently random) RNG
-    "macro-diagnostics",
-    "serde" # Enable better diagnostics for compile-time UUIDs
-]
-
 [features]
-#![feature(backtrace)]
-# by default Tauri runs in production mode
-# when `tauri dev` runs it is executed with `cargo run --no-default-features` if `devPath` is an URL
 default = [ "custom-protocol" ]
-# this feature is used used for production builds where `devPath` points to the filesystem
-# DO NOT remove this
 custom-protocol = [ "tauri/custom-protocol" ]
